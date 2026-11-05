@@ -4,40 +4,131 @@
 
 @layer base {
   body {
-    background-color: #fcfbf7;
-    color: #1e293b;
+    background-color: #fdf5e6;
+    color: #1c1812;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 }
 
 /* Custom warm scrollbars */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f7f5ed;
+  background: #f5e8cc;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d8c292;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #b45309;
 }
 
-/* Paper elevation and heritage border utilities */
+/* 3D Electro-Mechanical Paper & Console Utilities */
 .paper-card {
   background: #ffffff;
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
-  border: 1px solid rgba(180, 83, 9, 0.16);
+  border: 1.5px solid #e8d4a8;
+  border-bottom: 3px solid #d8c292;
+  box-shadow: 0 4px 20px -2px rgba(76, 29, 149, 0.05), 0 2px 6px -1px rgba(180, 83, 9, 0.03);
 }
 
 .paper-panel {
-  background: #f9f7f1;
-  border: 1px solid rgba(180, 83, 9, 0.18);
+  background: #f5e8cc;
+  border: 1.5px solid #e8d4a8;
+  border-bottom: 2.5px solid #d8c292;
 }
 
 .brass-rule {
-  border-color: rgba(180, 83, 9, 0.18);
+  border-color: #e8d4a8;
+}
+
+/* 3D Tactile Keycaps */
+.keycap-tab {
+  background: #fdfaf3;
+  border: 1.5px solid #e8d4a8;
+  border-bottom: 3.5px solid #d8c292;
+  box-shadow: 0 2px 4px rgba(180, 83, 9, 0.06);
+  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.keycap-tab:hover {
+  background: #ffffff;
+  border-color: #c7b07d;
+  border-bottom-color: #b59b63;
+  transform: translateY(-1px);
+}
+.keycap-tab:active {
+  transform: translateY(2px);
+  border-bottom-width: 1.5px;
+}
+.keycap-tab-active {
+  background: #4c1d95 !important;
+  color: #ffffff !important;
+  border-color: #3b1575 !important;
+  border-bottom: 3.5px solid #280c54 !important;
+  box-shadow: 0 3px 12px rgba(76, 29, 149, 0.25) !important;
+}
+
+/* 3D Action Push-Buttons */
+.btn-3d-royal {
+  background: #4c1d95;
+  color: #ffffff;
+  border: 1px solid #3b1575;
+  border-bottom: 4px solid #280c54;
+  box-shadow: 0 4px 14px rgba(76, 29, 149, 0.3);
+  transition: all 0.1s ease-in-out;
+}
+.btn-3d-royal:hover {
+  background: #5b21b6;
+  border-bottom-color: #3b1575;
+}
+.btn-3d-royal:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 4px rgba(76, 29, 149, 0.2);
+}
+
+.btn-3d-gold {
+  background: #b45309;
+  color: #ffffff;
+  border: 1px solid #924309;
+  border-bottom: 4px solid #78350f;
+  box-shadow: 0 4px 14px rgba(180, 83, 9, 0.3);
+  transition: all 0.1s ease-in-out;
+}
+.btn-3d-gold:hover {
+  background: #d97706;
+  border-bottom-color: #924309;
+}
+.btn-3d-gold:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 4px rgba(180, 83, 9, 0.2);
+}
+
+.btn-3d-crimson {
+  background: #b91c1c;
+  color: #ffffff;
+  border: 1px solid #991515;
+  border-bottom: 4px solid #7f1d1d;
+  box-shadow: 0 4px 14px rgba(185, 28, 28, 0.3);
+  transition: all 0.1s ease-in-out;
+}
+.btn-3d-crimson:hover {
+  background: #dc2626;
+  border-bottom-color: #991515;
+}
+.btn-3d-crimson:active {
+  transform: translateY(3px);
+  border-bottom-width: 1px;
+  box-shadow: 0 1px 4px rgba(185, 28, 28, 0.2);
+}
+
+/* 3D Ticket Badge */
+.ticket-badge {
+  background: #fef3c7;
+  border: 1px dashed #b45309;
+  border-bottom: 2.5px solid #924309;
+  color: #78350f;
 }

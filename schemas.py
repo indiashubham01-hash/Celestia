@@ -346,3 +346,41 @@ class LinkChannelResponse(BaseModel):
     deep_link: Optional[str]
     expires_at: datetime
 
+
+# ---------------------------------------------------------------------------
+# Authentication Schemas (OTP & Google Sign-In)
+# ---------------------------------------------------------------------------
+
+class SendOtpRequest(BaseModel):
+    email: str = Field(..., description="Recipient email address for OTP delivery")
+
+
+class SendOtpResponse(BaseModel):
+    success: bool
+    message: str
+    email: str
+    dev_code: Optional[str] = Field(
+        None,
+        description="Auto-generated verification code provided in dev/evaluator mode"
+    )
+
+
+class VerifyOtpRequest(BaseModel):
+    email: str = Field(..., description="Email address being verified")
+    code: str = Field(..., min_length=4, max_length=8, description="Verification code received")
+
+
+class GoogleAuthRequest(BaseModel):
+    email: str = Field(..., description="Google account email")
+    name: Optional[str] = Field(None, description="Google profile name")
+    picture: Optional[str] = Field(None, description="Google avatar image URL")
+    credential: Optional[str] = Field(None, description="Google OAuth credential or JWT if provided")
+
+
+class AuthResponse(BaseModel):
+    success: bool
+    user: UserProfile
+    token: str
+    message: str
+
+

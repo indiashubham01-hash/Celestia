@@ -20,79 +20,85 @@ export default function Navbar({
   const isDashboardView = currentView === 'dashboard';
 
   return (
-    <header className="sticky top-0 z-40 border-b border-amber-900/15 bg-[#fcfbf7]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-40 bg-[#f5e8cc]/95 backdrop-blur-md border-b-2 border-[#e8d4a8] shadow-sm">
+      {/* Carnival Canopy Accent Ribbon */}
+      <div className="h-1 bg-gradient-to-r from-[#4c1d95] via-[#b45309] to-[#b91c1c] w-full" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Product Identity */}
           <div
-            className="flex items-center space-x-3 cursor-pointer"
+            className="flex items-center space-x-3 cursor-pointer select-none"
             onClick={() => {
               if (isDashboardView) {
                 setActiveTab('dashboard');
               }
             }}
           >
-            <div className="w-9 h-9 rounded-xl bg-terracotta text-white flex items-center justify-center font-grand font-extrabold text-lg shadow-sm border border-amber-900/20">
+            <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-[#fef3c7] flex items-center justify-center font-grand font-black text-lg border border-[#3b1575] border-b-4 border-[#280c54] shadow-md transition-transform active:translate-y-0.5 active:border-b-2">
               B
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-heritage font-extrabold text-xl tracking-tight text-slate-900">
+                <span className="font-heritage font-black text-xl tracking-tight text-[#1c1812]">
                   Bachega
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono tracking-wider bg-amber-100 text-amber-900 border border-amber-300 rounded font-bold">
+                <span className="px-2 py-0.5 text-[10px] font-mono tracking-wider bg-[#b45309] text-white border border-[#924309] border-b-2 border-[#78350f] rounded font-bold uppercase shadow-sm">
                   READ-ONLY
                 </span>
               </div>
-              <p className="text-[11px] text-amber-950/70 font-heritage italic hidden sm:block">
-                DeFi Risk & Crash Simulation Workbench
+              <p className="text-[11px] text-[#443a2b] font-heritage italic hidden sm:block">
+                DeFi Risk &amp; Crash Simulation Workbench
               </p>
             </div>
           </div>
 
-          {/* Center Navigation Links - Visible on Dashboard */}
+          {/* Center Navigation Links - 3D Mechanical Keycaps on Dashboard */}
           {isDashboardView ? (
-            <nav className="hidden md:flex items-center space-x-1.5 font-sans">
+            <nav className="hidden md:flex items-center space-x-2 font-sans">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-all ${
                   activeTab === 'dashboard'
-                    ? 'bg-white text-slate-900 border border-amber-900/25 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-amber-100/40'
+                    ? 'keycap-tab-active'
+                    : 'keycap-tab text-[#443a2b]'
                 }`}
               >
-                <Activity className="w-3.5 h-3.5 text-sage" />
+                <span className="font-mono text-[10px] opacity-75">[1]</span>
+                <Activity className="w-3.5 h-3.5" />
                 <span>Portfolio</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('simulator')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-all ${
                   activeTab === 'simulator'
-                    ? 'bg-white text-slate-900 border border-amber-900/25 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-amber-100/40'
+                    ? 'keycap-tab-active'
+                    : 'keycap-tab text-[#443a2b]'
                 }`}
               >
-                <Sliders className="w-3.5 h-3.5 text-terracotta" />
+                <span className="font-mono text-[10px] opacity-75">[2]</span>
+                <Sliders className="w-3.5 h-3.5" />
                 <span>Crash Simulator</span>
               </button>
 
               <button
                 onClick={() => setActiveTab('alerts')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center space-x-2 ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-all ${
                   activeTab === 'alerts'
-                    ? 'bg-white text-slate-900 border border-amber-900/25 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-amber-100/40'
+                    ? 'keycap-tab-active'
+                    : 'keycap-tab text-[#443a2b]'
                 }`}
               >
-                <Bell className="w-3.5 h-3.5 text-brass" />
+                <span className="font-mono text-[10px] opacity-75">[3]</span>
+                <Bell className="w-3.5 h-3.5" />
                 <span>Alert Preferences</span>
               </button>
             </nav>
           ) : (
-            <div className="hidden md:flex items-center space-x-2 text-xs text-slate-600 font-mono">
-              <span className="w-2 h-2 rounded-full bg-sage"></span>
-              <span>100% Non-Custodial Simulation</span>
+            <div className="hidden md:flex items-center space-x-2 text-xs text-[#443a2b] font-mono bg-[#fdf5e6] px-3.5 py-1 rounded-full border border-[#e8d4a8] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
+              <span className="font-semibold">100% Non-Custodial Simulation</span>
             </div>
           )}
 
@@ -102,10 +108,10 @@ export default function Navbar({
               <>
                 {/* Active Monitored Wallet Pill */}
                 {primaryWallet && (
-                  <div className="hidden sm:flex items-center space-x-2 bg-white border border-amber-900/15 rounded-xl px-3 py-1.5 text-xs shadow-sm">
-                    <span className="w-2 h-2 rounded-full bg-sage animate-pulse"></span>
-                    <span className="text-slate-500 capitalize">{primaryWallet.chain}:</span>
-                    <span className="font-mono font-medium text-slate-800">
+                  <div className="hidden sm:flex items-center space-x-2 bg-[#ffffff] border border-[#e8d4a8] border-b-2 border-[#d8c292] rounded-xl px-3 py-1.5 text-xs shadow-sm">
+                    <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
+                    <span className="text-[#786e5e] uppercase text-[10px] font-bold">{primaryWallet.chain}:</span>
+                    <span className="font-mono font-bold text-[#4c1d95]">
                       {shortenAddress(primaryWallet.address)}
                     </span>
                   </div>
@@ -115,7 +121,7 @@ export default function Navbar({
                 <button
                   onClick={onOpenWalletModal}
                   title="Track another public address"
-                  className="bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1"
+                  className="btn-3d-gold px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Add Wallet</span>
@@ -125,10 +131,10 @@ export default function Navbar({
                 {user && (
                   <div
                     title={user.email}
-                    className="hidden lg:flex items-center space-x-1.5 bg-white border border-amber-900/15 rounded-xl px-3 py-1.5 text-xs text-slate-700 shadow-sm"
+                    className="hidden lg:flex items-center space-x-1.5 bg-[#ffffff] border border-[#e8d4a8] border-b-2 border-[#d8c292] rounded-xl px-3 py-1.5 text-xs text-[#443a2b] shadow-sm"
                   >
-                    <User className="w-3.5 h-3.5 text-amber-800" />
-                    <span className="font-mono max-w-[120px] truncate">{user.email}</span>
+                    <User className="w-3.5 h-3.5 text-[#b45309]" />
+                    <span className="font-mono font-medium max-w-[120px] truncate">{user.email}</span>
                   </div>
                 )}
 
@@ -136,7 +142,7 @@ export default function Navbar({
                 <button
                   onClick={onLogOut}
                   title="Sign out of current session"
-                  className="bg-white hover:bg-red-50 text-slate-700 hover:text-red-700 border border-amber-900/20 px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition-all shadow-sm"
+                  className="bg-[#ffffff] hover:bg-[#fee2e2] text-[#443a2b] hover:text-[#b91c1c] border border-[#e8d4a8] border-b-3 border-[#d8c292] active:border-b active:translate-y-0.5 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Log Out</span>
@@ -147,17 +153,17 @@ export default function Navbar({
                 {/* Landing / Onboard Action Buttons */}
                 <button
                   onClick={onTryDemo}
-                  className="bg-terracotta hover:bg-terracotta-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold tracking-wide flex items-center space-x-1.5 transition-all shadow-terracotta"
+                  className="btn-3d-royal px-4 py-2 rounded-xl text-xs font-bold tracking-wide flex items-center space-x-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#fde68a]" />
                   <span>Try Live Demo</span>
                 </button>
 
                 <button
                   onClick={onOpenLoginModal}
-                  className="bg-white hover:bg-amber-50/60 text-slate-800 border border-amber-900/25 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5"
+                  className="btn-3d-gold px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-slate-600" />
+                  <LogIn className="w-3.5 h-3.5 text-white" />
                   <span>Sign In</span>
                 </button>
               </>

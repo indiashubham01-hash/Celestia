@@ -28,13 +28,38 @@ async def run_tests():
         print("✅ GET /api/health: OK")
 
         # 2. User & Onboarding
-        print("\n--- Testing /api/me ---")
+        print("\n--- Testing /api/me & /api/auth ---")
         res = await client.get("/api/me")
         assert res.status_code == 200
         user = res.json()
         assert user["onboarding_status"] == "COMPLETED"
         assert "wallets_count" in user
         print(f"✅ GET /api/me: OK - User: {user['handle']}, Wallets: {user['wallets_count']}")
+
+        # Test Send OTP
+        res = await client.post("/api/auth/send-otp", json={"email": "tester@example.com"})
+        assert res.status_code == 200
+        otp_data = res.json()
+        assert otp_data["success"] is True
+        assert "dev_code" in otp_data
+        dev_code = otp_data["dev_code"]
+        print(f"✅ POST /api/auth/send-otp: OK - Generated dev_code {dev_code}")
+
+        # Test Verify OTP
+        res = await client.post("/api/auth/verify-otp", json={"email": "tester@example.com", "code": dev_code})
+        assert res.status_code == 200
+        auth_data = res.json()
+        assert auth_data["success"] is True
+        assert auth_data["user"]["email"] == "tester@example.com"
+        print(f"✅ POST /api/auth/verify-otp: OK - Authenticated {auth_data['user']['email']}")
+
+        # Test Google Auth
+        res = await client.post("/api/auth/google", json={"email": "google.user@gmail.com", "name": "Google Tester"})
+        assert res.status_code == 200
+        g_data = res.json()
+        assert g_data["success"] is True
+        assert g_data["user"]["email"] == "google.user@gmail.com"
+        print(f"✅ POST /api/auth/google: OK - Authenticated {g_data['user']['email']}")
 
         # 3. Wallets Management
         print("\n--- Testing /api/wallets ---")

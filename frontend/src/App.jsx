@@ -190,7 +190,7 @@ export default function App() {
   const primaryWallet = activeWallet || wallets.find((w) => w.is_primary) || wallets[0];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fcfbf7] text-slate-800 font-sans">
+    <div className="min-h-screen flex flex-col bg-[#fdf5e6] text-[#1c1812] font-sans">
       {/* Top Navigation Bar */}
       <Navbar
         currentView={currentView}

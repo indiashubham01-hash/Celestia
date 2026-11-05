@@ -38,6 +38,23 @@ export const api = {
   // 1. User & Onboarding
   getProfile: () => request('/api/me'),
 
+  // Auth (OTP & Google)
+  sendOtp: (email) =>
+    request('/api/auth/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  verifyOtp: (email, code) =>
+    request('/api/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    }),
+  googleAuth: (data) =>
+    request('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
   // 2. Wallets
   getWallets: () => request('/api/wallets'),
   addWallet: (data) =>

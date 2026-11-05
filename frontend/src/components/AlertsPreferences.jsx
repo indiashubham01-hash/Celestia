@@ -103,7 +103,7 @@ export default function AlertsPreferences() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-slate-500 font-mono text-xs">
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-[#786e5e] font-mono text-xs">
         Loading alert configurations...
       </div>
     );
@@ -113,22 +113,22 @@ export default function AlertsPreferences() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
       {/* Title */}
       <div>
-        <h2 className="text-2xl font-heritage font-extrabold text-slate-900 tracking-tight">Liquidation Alert Preferences</h2>
-        <p className="text-xs text-slate-500 mt-1 font-sans">
+        <h2 className="text-2xl font-heritage font-black text-[#1c1812] tracking-tight">Liquidation Alert Preferences</h2>
+        <p className="text-xs text-[#786e5e] mt-1 font-sans">
           Configure proactive early-warning triggers and authenticated notification delivery channels.
         </p>
       </div>
 
       {saveSuccess && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs flex items-center space-x-2 font-medium">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div className="p-4 rounded-xl bg-[#dcfce7] border border-[#86efac] text-[#166534] text-xs flex items-center space-x-2 font-bold shadow-sm">
+          <CheckCircle2 className="w-4 h-4 text-[#15803d]" />
           <span>Alert threshold preferences saved successfully.</span>
         </div>
       )}
 
       {error && (
-        <div className="p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-xs flex items-center space-x-2 font-medium">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+        <div className="p-4 rounded-xl bg-[#fee2e2] border border-[#fca5a5] text-[#991515] text-xs flex items-center space-x-2 font-bold shadow-sm">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-[#b91c1c]" />
           <span>{error}</span>
         </div>
       )}
@@ -136,16 +136,16 @@ export default function AlertsPreferences() {
       <form onSubmit={handleSave} className="space-y-6">
         {/* Risk Threshold Sliders */}
         <div className="paper-card p-6 rounded-2xl space-y-6">
-          <h3 className="text-base font-heritage font-bold text-slate-900 flex items-center space-x-2">
-            <Bell className="w-4 h-4 text-terracotta" />
-            <span>Health Factor & Crash Triggers</span>
+          <h3 className="text-base font-heritage font-black text-[#1c1812] flex items-center space-x-2">
+            <Bell className="w-4 h-4 text-[#4c1d95]" />
+            <span>Health Factor &amp; Crash Triggers</span>
           </h3>
 
           {/* Warning HF Threshold */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-700 font-semibold font-sans">Health Factor Warning Threshold</span>
-              <span className="font-mono font-bold text-brass text-sm">
+              <span className="text-[#1c1812] font-semibold font-sans">Health Factor Warning Threshold</span>
+              <span className="font-mono font-bold text-[#b45309] text-sm">
                 HF &lt; {prefs.hf_warning_threshold.toFixed(2)}
               </span>
             </div>
@@ -156,18 +156,18 @@ export default function AlertsPreferences() {
               step="0.05"
               value={prefs.hf_warning_threshold}
               onChange={(e) => setPrefs({ ...prefs, hf_warning_threshold: parseFloat(e.target.value) })}
-              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brass"
+              className="w-full h-2.5 bg-[#f5e8cc] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
             />
-            <p className="text-[11px] text-slate-500 font-sans">
+            <p className="text-[11px] text-[#786e5e] font-sans">
               Sends an early advisory digest when your position slips into the tension zone.
             </p>
           </div>
 
           {/* Critical HF Threshold */}
-          <div className="space-y-2 pt-2 border-t border-amber-900/10">
+          <div className="space-y-2 pt-2 border-t border-[#e8d4a8]">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-700 font-semibold font-sans">Health Factor Critical Threshold</span>
-              <span className="font-mono font-bold text-carmine text-sm">
+              <span className="text-[#1c1812] font-semibold font-sans">Health Factor Critical Threshold</span>
+              <span className="font-mono font-bold text-[#b91c1c] text-sm">
                 HF &lt; {prefs.hf_critical_threshold.toFixed(2)}
               </span>
             </div>
@@ -178,18 +178,18 @@ export default function AlertsPreferences() {
               step="0.01"
               value={prefs.hf_critical_threshold}
               onChange={(e) => setPrefs({ ...prefs, hf_critical_threshold: parseFloat(e.target.value) })}
-              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-carmine"
+              className="w-full h-2.5 bg-[#f5e8cc] rounded-lg appearance-none cursor-pointer accent-[#b91c1c]"
             />
-            <p className="text-[11px] text-slate-500 font-sans">
+            <p className="text-[11px] text-[#786e5e] font-sans">
               High-priority immediate push alert when position is within arm's reach of liquidation (HF 1.00).
             </p>
           </div>
 
           {/* Price drop warning */}
-          <div className="space-y-2 pt-2 border-t border-amber-900/10">
+          <div className="space-y-2 pt-2 border-t border-[#e8d4a8]">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-700 font-semibold font-sans">24-Hour Collateral Flash Crash Trigger</span>
-              <span className="font-mono font-bold text-carmine text-sm">
+              <span className="text-[#1c1812] font-semibold font-sans">24-Hour Collateral Flash Crash Trigger</span>
+              <span className="font-mono font-bold text-[#b91c1c] text-sm">
                 {prefs.price_drop_warning_pct.toFixed(0)}% Drop
               </span>
             </div>
@@ -200,15 +200,15 @@ export default function AlertsPreferences() {
               step="5"
               value={prefs.price_drop_warning_pct}
               onChange={(e) => setPrefs({ ...prefs, price_drop_warning_pct: parseFloat(e.target.value) })}
-              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-carmine"
+              className="w-full h-2.5 bg-[#f5e8cc] rounded-lg appearance-none cursor-pointer accent-[#b91c1c]"
             />
           </div>
 
           {/* Liquidation distance warning */}
-          <div className="space-y-2 pt-2 border-t border-amber-900/10">
+          <div className="space-y-2 pt-2 border-t border-[#e8d4a8]">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-700 font-semibold font-sans">Liquidation Distance Warning</span>
-              <span className="font-mono font-bold text-brass text-sm">
+              <span className="text-[#1c1812] font-semibold font-sans">Liquidation Distance Warning</span>
+              <span className="font-mono font-bold text-[#b45309] text-sm">
                 Within {prefs.liquidation_distance_warning_pct.toFixed(0)}% of Liquidation Price
               </span>
             </div>
@@ -219,28 +219,28 @@ export default function AlertsPreferences() {
               step="5"
               value={prefs.liquidation_distance_warning_pct}
               onChange={(e) => setPrefs({ ...prefs, liquidation_distance_warning_pct: parseFloat(e.target.value) })}
-              className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-brass"
+              className="w-full h-2.5 bg-[#f5e8cc] rounded-lg appearance-none cursor-pointer accent-[#b45309]"
             />
           </div>
         </div>
 
         {/* Channels Configuration */}
         <div className="paper-card p-6 rounded-2xl space-y-4">
-          <h3 className="text-base font-heritage font-bold text-slate-900 flex items-center space-x-2">
-            <MessageSquare className="w-4 h-4 text-deck" />
-            <span>Delivery Channels & Verified Opt-Ins</span>
+          <h3 className="text-base font-heritage font-black text-[#1c1812] flex items-center space-x-2">
+            <MessageSquare className="w-4 h-4 text-[#4c1d95]" />
+            <span>Delivery Channels &amp; Verified Opt-Ins</span>
           </h3>
 
           <div className="space-y-3">
             {/* Telegram Channel */}
-            <div className="p-4 rounded-xl bg-amber-50/40 border border-amber-900/15 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] border-b-2 border-[#d8c292] flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-900 border border-blue-300 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-white flex items-center justify-center font-bold shadow-sm">
                   <MessageSquare className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-heritage font-bold text-slate-900">Telegram Alerts Bot</h4>
-                  <p className="text-xs text-slate-600 font-sans">Instant push notifications for critical liquidation risks</p>
+                  <h4 className="text-sm font-heritage font-black text-[#1c1812]">Telegram Alerts Bot</h4>
+                  <p className="text-xs text-[#443a2b] font-sans">Instant push notifications for critical liquidation risks</p>
                 </div>
               </div>
 
@@ -252,7 +252,7 @@ export default function AlertsPreferences() {
                     setLinkResult(null);
                     setLinkModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-slate-800 text-xs font-bold border border-amber-900/20 transition-colors shadow-sm"
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#fef3c7] text-[#1c1812] text-xs font-bold border border-[#e8d4a8] border-b-2 border-[#d8c292] active:border-b active:translate-y-0.5 transition-all shadow-sm"
                 >
                   Verify Channel
                 </button>
@@ -260,20 +260,20 @@ export default function AlertsPreferences() {
                   type="checkbox"
                   checked={prefs.telegram_enabled}
                   onChange={(e) => setPrefs({ ...prefs, telegram_enabled: e.target.checked })}
-                  className="w-4 h-4 rounded text-terracotta focus:ring-terracotta border-amber-900/30"
+                  className="w-4 h-4 rounded text-[#4c1d95] focus:ring-[#4c1d95] border-[#e8d4a8]"
                 />
               </div>
             </div>
 
             {/* WhatsApp Channel */}
-            <div className="p-4 rounded-xl bg-amber-50/40 border border-amber-900/15 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] border-b-2 border-[#d8c292] flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#15803d] text-white flex items-center justify-center font-bold shadow-sm">
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-heritage font-bold text-slate-900">WhatsApp Emergency Alerts</h4>
-                  <p className="text-xs text-slate-600 font-sans">Direct WhatsApp dispatch during sudden market crashes</p>
+                  <h4 className="text-sm font-heritage font-black text-[#1c1812]">WhatsApp Emergency Alerts</h4>
+                  <p className="text-xs text-[#443a2b] font-sans">Direct WhatsApp dispatch during sudden market crashes</p>
                 </div>
               </div>
 
@@ -285,7 +285,7 @@ export default function AlertsPreferences() {
                     setLinkResult(null);
                     setLinkModalOpen(true);
                   }}
-                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-amber-100 text-slate-800 text-xs font-bold border border-amber-900/20 transition-colors shadow-sm"
+                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#fef3c7] text-[#1c1812] text-xs font-bold border border-[#e8d4a8] border-b-2 border-[#d8c292] active:border-b active:translate-y-0.5 transition-all shadow-sm"
                 >
                   Verify Channel
                 </button>
@@ -293,20 +293,20 @@ export default function AlertsPreferences() {
                   type="checkbox"
                   checked={prefs.whatsapp_enabled}
                   onChange={(e) => setPrefs({ ...prefs, whatsapp_enabled: e.target.checked })}
-                  className="w-4 h-4 rounded text-terracotta focus:ring-terracotta border-amber-900/30"
+                  className="w-4 h-4 rounded text-[#4c1d95] focus:ring-[#4c1d95] border-[#e8d4a8]"
                 />
               </div>
             </div>
 
             {/* Email Channel */}
-            <div className="p-4 rounded-xl bg-amber-50/40 border border-amber-900/15 flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] border-b-2 border-[#d8c292] flex items-center justify-between">
               <div className="flex items-center space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-xl bg-[#b45309] text-white flex items-center justify-center font-bold shadow-sm">
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-heritage font-bold text-slate-900">Email Digest & Alerts</h4>
-                  <p className="text-xs text-slate-600 font-sans">Sent to registered account address (investor@bachega.app)</p>
+                  <h4 className="text-sm font-heritage font-black text-[#1c1812]">Email Digest &amp; Alerts</h4>
+                  <p className="text-xs text-[#443a2b] font-sans">Sent to registered account address</p>
                 </div>
               </div>
 
@@ -314,7 +314,7 @@ export default function AlertsPreferences() {
                 type="checkbox"
                 checked={prefs.email_enabled}
                 onChange={(e) => setPrefs({ ...prefs, email_enabled: e.target.checked })}
-                className="w-4 h-4 rounded text-terracotta focus:ring-terracotta border-amber-900/30"
+                className="w-4 h-4 rounded text-[#4c1d95] focus:ring-[#4c1d95] border-[#e8d4a8]"
               />
             </div>
           </div>
@@ -325,7 +325,7 @@ export default function AlertsPreferences() {
           <button
             type="submit"
             disabled={saving}
-            className="px-6 py-2.5 rounded-xl bg-terracotta hover:bg-terracotta-700 text-white font-bold text-xs transition-all shadow-terracotta disabled:opacity-50 flex items-center space-x-2"
+            className="btn-3d-royal px-6 py-2.5 rounded-xl font-bold text-xs disabled:opacity-50 flex items-center space-x-2"
           >
             {saving ? (
               <>
@@ -344,19 +344,19 @@ export default function AlertsPreferences() {
 
       {/* Channel Verification Challenge Modal */}
       {linkModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-md bg-[#fcfbf7] border border-amber-900/25 rounded-2xl p-6 shadow-2xl paper-card">
-            <h3 className="text-base font-heritage font-bold text-slate-900 capitalize mb-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-md bg-[#fdf5e6] border-2 border-[#e8d4a8] border-b-4 border-[#d8c292] rounded-2xl p-6 shadow-2xl">
+            <h3 className="text-base font-heritage font-black text-[#1c1812] capitalize mb-1">
               Verify {channelToLink} Opt-In
             </h3>
-            <p className="text-xs text-slate-600 mb-4 font-sans">
+            <p className="text-xs text-[#443a2b] mb-4 font-sans">
               Two-factor channel handshake ensures only you receive critical liquidation alerts.
             </p>
 
             {!linkResult ? (
               <form onSubmit={handleStartChannelLink} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5 font-mono">
+                  <label className="block text-xs font-semibold text-[#1c1812] mb-1.5 font-mono">
                     {channelToLink === 'telegram' ? 'Telegram Handle / Username' : 'Phone Number (E.164 with Country Code)'}
                   </label>
                   <input
@@ -365,20 +365,20 @@ export default function AlertsPreferences() {
                     value={channelIdentifier}
                     onChange={(e) => setChannelIdentifier(e.target.value)}
                     placeholder={channelToLink === 'telegram' ? '@your_username' : '+1 (555) 234-5678'}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-amber-900/20 text-slate-900 text-xs font-mono focus:outline-none focus:border-terracotta shadow-sm"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white border border-[#e8d4a8] text-[#1c1812] text-xs font-mono focus:outline-none focus:border-[#4c1d95] shadow-sm"
                   />
                 </div>
 
                 {/* Explicit Consent Checkbox */}
-                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex items-start space-x-2.5">
+                <div className="p-3.5 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] flex items-start space-x-2.5">
                   <input
                     type="checkbox"
                     id="consent_checkbox"
                     checked={channelConsent}
                     onChange={(e) => setChannelConsent(e.target.checked)}
-                    className="mt-0.5 rounded text-terracotta focus:ring-terracotta border-amber-900/30"
+                    className="mt-0.5 rounded text-[#4c1d95] focus:ring-[#4c1d95] border-[#e8d4a8]"
                   />
-                  <label htmlFor="consent_checkbox" className="text-[11px] text-amber-950/80 leading-snug font-sans">
+                  <label htmlFor="consent_checkbox" className="text-[11px] text-[#443a2b] leading-snug font-sans">
                     I explicitly consent to receive automated DeFi risk and crash simulation alert notifications via {channelToLink}. I understand this is an informational tool, not financial advice.
                   </label>
                 </div>
@@ -387,14 +387,14 @@ export default function AlertsPreferences() {
                   <button
                     type="button"
                     onClick={() => setLinkModalOpen(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900"
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#786e5e] hover:text-[#1c1812]"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={linking || !channelConsent}
-                    className="px-5 py-2.5 rounded-xl bg-terracotta hover:bg-terracotta-700 text-white font-bold text-xs shadow-terracotta disabled:opacity-50"
+                    className="btn-3d-royal px-5 py-2.5 rounded-xl font-bold text-xs disabled:opacity-50"
                   >
                     {linking ? 'Generating Challenge...' : 'Generate Verification Challenge'}
                   </button>
@@ -402,16 +402,16 @@ export default function AlertsPreferences() {
               </form>
             ) : (
               <div className="space-y-4">
-                <div className="p-4 rounded-xl bg-amber-100/70 border border-amber-300 text-center space-y-1.5">
-                  <span className="text-[10px] font-mono text-amber-900 font-bold uppercase tracking-widest">Verification Challenge Code</span>
-                  <div className="text-xl font-mono font-extrabold text-slate-900 tracking-widest">
+                <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] text-center space-y-1.5">
+                  <span className="text-[10px] font-mono text-[#b45309] font-bold uppercase tracking-widest">Verification Challenge Code</span>
+                  <div className="text-xl font-mono font-black text-[#4c1d95] tracking-widest">
                     {linkResult.verification_code}
                   </div>
-                  <span className="text-[10px] text-slate-500 block">Valid for 15 minutes</span>
+                  <span className="text-[10px] text-[#786e5e] block">Valid for 15 minutes</span>
                 </div>
 
-                <div className="text-xs text-slate-700 leading-relaxed bg-white p-4 rounded-xl border border-amber-900/15">
-                  <strong className="text-slate-900 block mb-1 font-mono">Instructions:</strong>
+                <div className="text-xs text-[#443a2b] leading-relaxed bg-white p-4 rounded-xl border border-[#e8d4a8]">
+                  <strong className="text-[#1c1812] block mb-1 font-mono">Instructions:</strong>
                   {linkResult.verification_instructions}
                 </div>
 
@@ -420,7 +420,7 @@ export default function AlertsPreferences() {
                     href={linkResult.deep_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs flex items-center justify-center space-x-2 transition-colors"
+                    className="w-full btn-3d-royal py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center space-x-2"
                   >
                     <span>Open in {channelToLink}</span>
                     <ExternalLink className="w-3.5 h-3.5" />
@@ -430,7 +430,7 @@ export default function AlertsPreferences() {
                 <button
                   type="button"
                   onClick={() => setLinkModalOpen(false)}
-                  className="w-full py-2.5 rounded-xl bg-terracotta hover:bg-terracotta-700 text-white font-bold text-xs"
+                  className="w-full btn-3d-gold py-2.5 rounded-xl font-bold text-xs"
                 >
                   I Have Sent The Verification Code
                 </button>
