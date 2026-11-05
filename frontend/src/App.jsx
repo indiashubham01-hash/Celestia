@@ -1,18 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import HeroSection from './components/HeroSection';
-import LoginModal from './components/LoginModal';
+import AuthModal from './components/AuthModal';
 import OnboardingCard from './components/OnboardingCard';
 import PortfolioDashboard from './components/PortfolioDashboard';
 import CrashSimulator from './components/CrashSimulator';
 import AlertsPreferences from './components/AlertsPreferences';
 import WalletModal from './components/WalletModal';
 import DisclaimerBanner from './components/DisclaimerBanner';
+import { supabase } from './lib/supabase';
 import { api } from './services/api';
 
 const DEMO_USER = {
+  id: 'usr_pitch_demo',
   email: 'evaluator.demo@bachega.app',
-  handle: 'evaluator_demo',
+  user_metadata: { name: 'Pitch Evaluator' },
   isAuthenticated: true,
 };
 
@@ -24,9 +26,9 @@ const DEMO_WALLET = {
 };
 
 export default function App() {
-  // Navigation & View state: 'landing' | 'onboard' | 'dashboard'
+  // 4 Visual States: 'landing' (default) | 'onboard' | 'dashboard'
   const [currentView, setCurrentView] = useState('landing');
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
 
   // Authenticated user & active wallet session
@@ -43,32 +45,96 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // 1. Session Persistence Check on Initial Mount
+  // 1. Session State & Persistence with Supabase + localStorage
   useEffect(() => {
+    // A. Check localStorage cache first for fast synchronous render
+    let cachedUser = null;
+    let cachedWallet = null;
     try {
       const savedUserStr = localStorage.getItem('bachega_user');
       const savedWalletStr = localStorage.getItem('bachega_wallet');
+      cachedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+      cachedWallet = savedWalletStr ? JSON.parse(savedWalletStr) : null;
 
-      const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
-      const savedWallet = savedWalletStr ? JSON.parse(savedWalletStr) : null;
-
-      if (savedUser && savedWallet) {
-        setUser(savedUser);
-        setActiveWallet(savedWallet);
+      if (cachedUser && cachedWallet) {
+        setUser(cachedUser);
+        setActiveWallet(cachedWallet);
         setCurrentView('dashboard');
-      } else if (savedUser) {
-        setUser(savedUser);
+      } else if (cachedUser) {
+        setUser(cachedUser);
         setCurrentView('onboard');
       } else {
         setCurrentView('landing');
       }
     } catch (e) {
-      console.warn('Could not read session from localStorage:', e);
-      setCurrentView('landing');
+      console.warn('Could not read cached session:', e);
     }
+
+    // B. Check Supabase Auth Session asynchronously
+    supabase.auth.getSession().then(({ data: { session }, error: sessionError }) => {
+      if (sessionError) {
+        console.warn('Supabase getSession error:', sessionError.message);
+        return;
+      }
+
+      if (session?.user) {
+        const supaUser = {
+          id: session.user.id,
+          email: session.user.email,
+          user_metadata: session.user.user_metadata,
+          isAuthenticated: true,
+        };
+        setUser(supaUser);
+        try {
+          localStorage.setItem('bachega_user', JSON.stringify(supaUser));
+        } catch (e) {}
+
+        const savedWalletStr = localStorage.getItem('bachega_wallet');
+        if (savedWalletStr || cachedWallet) {
+          setCurrentView('dashboard');
+        } else {
+          setCurrentView('onboard');
+        }
+      }
+    });
+
+    // C. Subscribe to live Supabase Auth State changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        const supaUser = {
+          id: session.user.id,
+          email: session.user.email,
+          user_metadata: session.user.user_metadata,
+          isAuthenticated: true,
+        };
+        setUser(supaUser);
+        try {
+          localStorage.setItem('bachega_user', JSON.stringify(supaUser));
+        } catch (e) {}
+
+        const savedWallet = localStorage.getItem('bachega_wallet');
+        if (savedWallet) {
+          setCurrentView('dashboard');
+        } else {
+          setCurrentView('onboard');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setActiveWallet(null);
+        try {
+          localStorage.removeItem('bachega_user');
+          localStorage.removeItem('bachega_wallet');
+        } catch (e) {}
+        setCurrentView('landing');
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  // 2. Fetch portfolio and wallets from FastAPI backend
+  // 2. Fetch portfolio and wallets from backend API
   const loadData = async () => {
     try {
       setLoading(true);
@@ -80,7 +146,6 @@ export default function App() {
       setPortfolio(portfolioData);
       setWallets(walletsData);
 
-      // If activeWallet not yet set and backend has wallets, set primary
       if (!activeWallet && walletsData && walletsData.length > 0) {
         const primary = walletsData.find((w) => w.is_primary) || walletsData[0];
         setActiveWallet(primary);
@@ -107,23 +172,29 @@ export default function App() {
     } catch (e) {
       console.warn('localStorage write failed:', e);
     }
-    setIsLoginModalOpen(false);
+    setIsAuthModalOpen(false);
     setCurrentView('dashboard');
     setActiveTab('dashboard');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 4. Successful Authentication Handler
-  const handleLoginSuccess = (userData) => {
-    setUser(userData);
+  // 4. Successful Authentication Handler (from AuthModal)
+  const handleAuthSuccess = (userData) => {
+    const formattedUser = {
+      id: userData.id || 'usr_' + Date.now(),
+      email: userData.email,
+      user_metadata: userData.user_metadata || {},
+      isAuthenticated: true,
+    };
+    setUser(formattedUser);
     try {
-      localStorage.setItem('bachega_user', JSON.stringify(userData));
+      localStorage.setItem('bachega_user', JSON.stringify(formattedUser));
     } catch (e) {
       console.warn('localStorage write failed:', e);
     }
-    setIsLoginModalOpen(false);
+    setIsAuthModalOpen(false);
 
-    // If a wallet is already remembered or present, go to dashboard; else proceed to onboarding
+    // If wallet already cached or exists, route to dashboard; else to onboard
     const savedWalletStr = localStorage.getItem('bachega_wallet');
     if (savedWalletStr || activeWallet || (wallets && wallets.length > 0)) {
       setCurrentView('dashboard');
@@ -154,8 +225,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 6. Log Out & State Reset Handler
-  const handleLogOut = () => {
+  // 6. Sign Out Handler
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.warn('Supabase signOut notice:', err);
+    }
     try {
       localStorage.removeItem('bachega_user');
       localStorage.removeItem('bachega_wallet');
@@ -169,7 +245,6 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Additional wallet registered from dashboard
   const handleWalletAdded = (newWallet) => {
     setWallets((prev) => [newWallet, ...prev]);
     setActiveWallet(newWallet);
@@ -191,25 +266,25 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fdf5e6] text-[#1c1812] font-sans">
-      {/* Top Navigation Bar */}
+      {/* Top Navigation Bar with active wallet, network badge, and Sign Out */}
       <Navbar
         currentView={currentView}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenWalletModal={() => setIsWalletModalOpen(true)}
-        onOpenLoginModal={() => setIsLoginModalOpen(true)}
+        onOpenLoginModal={() => setIsAuthModalOpen(true)}
         onTryDemo={handleTryDemo}
-        onLogOut={handleLogOut}
+        onLogOut={handleSignOut}
         user={user}
         primaryWallet={primaryWallet}
       />
 
-      {/* Main Content View Switcher */}
+      {/* Main Screen Navigation */}
       <main className="flex-1">
-        {/* VIEW 1: LANDING */}
+        {/* VIEW 1: LANDING (Default) */}
         {currentView === 'landing' && (
           <HeroSection
-            onSignIn={() => setIsLoginModalOpen(true)}
+            onSignIn={() => setIsAuthModalOpen(true)}
             onTryDemo={handleTryDemo}
           />
         )}
@@ -245,22 +320,22 @@ export default function App() {
         )}
       </main>
 
-      {/* VIEW MODAL: Minimal Auth (Email OTP / Google / 1-Click Guest) */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-        onLoginSuccess={handleLoginSuccess}
+      {/* VIEW MODAL: Two-Step Supabase Email OTP + 1-Click Demo */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
         onTryDemo={handleTryDemo}
       />
 
-      {/* Wallet Management Modal (Accessible from TopBar on dashboard) */}
+      {/* Wallet Management Modal */}
       <WalletModal
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
         onWalletAdded={handleWalletAdded}
       />
 
-      {/* Persistent Disclaimer & Regulatory Banner */}
+      {/* Persistent Regulatory & Risk Disclaimer ("Simulation, not prediction.") */}
       <DisclaimerBanner />
     </div>
   );

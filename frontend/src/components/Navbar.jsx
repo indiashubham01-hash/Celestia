@@ -106,12 +106,14 @@ export default function Navbar({
           <div className="flex items-center space-x-2.5">
             {isDashboardView ? (
               <>
-                {/* Active Monitored Wallet Pill */}
+                {/* Active Monitored Wallet Pill with Network Badge */}
                 {primaryWallet && (
                   <div className="hidden sm:flex items-center space-x-2 bg-[#ffffff] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] rounded-xl px-3 py-1.5 text-xs">
                     <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
-                    <span className="text-[#786e5e] uppercase text-[10px] font-bold">{primaryWallet.chain}:</span>
-                    <span className="font-mono font-bold text-[#4c1d95]">
+                    <span className="px-1.5 py-0.5 rounded bg-[#f5e8cc] border border-[#e8d4a8] text-[#4c1d95] text-[10px] font-bold uppercase font-mono">
+                      {primaryWallet.chain}
+                    </span>
+                    <span className="font-mono font-bold text-[#1c1812]">
                       {shortenAddress(primaryWallet.address)}
                     </span>
                   </div>
@@ -138,14 +140,14 @@ export default function Navbar({
                   </div>
                 )}
 
-                {/* Log Out Button */}
+                {/* Sign Out Button */}
                 <button
                   onClick={onLogOut}
                   title="Sign out of current session"
                   className="bg-[#ffffff] hover:bg-[#fee2e2] text-[#443a2b] hover:text-[#b91c1c] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] active:translate-y-0.5 active:shadow-[0_1px_0_#d8c292] px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Log Out</span>
+                  <span className="hidden sm:inline">Sign Out</span>
                 </button>
               </>
             ) : (
