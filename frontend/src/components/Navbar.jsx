@@ -35,7 +35,7 @@ export default function Navbar({
               }
             }}
           >
-            <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-[#fef3c7] flex items-center justify-center font-grand font-black text-lg border border-[#3b1575] border-b-4 border-[#280c54] shadow-md transition-transform active:translate-y-0.5 active:border-b-2">
+            <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-[#fef3c7] flex items-center justify-center font-grand font-black text-lg border border-[#3b1575] shadow-[0_3px_0_#280c54] transition-transform active:translate-y-0.5 active:shadow-[0_1px_0_#280c54]">
               B
             </div>
             <div>
@@ -43,7 +43,7 @@ export default function Navbar({
                 <span className="font-heritage font-black text-xl tracking-tight text-[#1c1812]">
                   Bachega
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono tracking-wider bg-[#b45309] text-white border border-[#924309] border-b-2 border-[#78350f] rounded font-bold uppercase shadow-sm">
+                <span className="px-2 py-0.5 text-[10px] font-mono tracking-wider bg-[#b45309] text-white border border-[#924309] shadow-[0_1px_0_#78350f] rounded font-bold uppercase">
                   READ-ONLY
                 </span>
               </div>
@@ -108,7 +108,7 @@ export default function Navbar({
               <>
                 {/* Active Monitored Wallet Pill */}
                 {primaryWallet && (
-                  <div className="hidden sm:flex items-center space-x-2 bg-[#ffffff] border border-[#e8d4a8] border-b-2 border-[#d8c292] rounded-xl px-3 py-1.5 text-xs shadow-sm">
+                  <div className="hidden sm:flex items-center space-x-2 bg-[#ffffff] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] rounded-xl px-3 py-1.5 text-xs">
                     <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
                     <span className="text-[#786e5e] uppercase text-[10px] font-bold">{primaryWallet.chain}:</span>
                     <span className="font-mono font-bold text-[#4c1d95]">
@@ -131,7 +131,7 @@ export default function Navbar({
                 {user && (
                   <div
                     title={user.email}
-                    className="hidden lg:flex items-center space-x-1.5 bg-[#ffffff] border border-[#e8d4a8] border-b-2 border-[#d8c292] rounded-xl px-3 py-1.5 text-xs text-[#443a2b] shadow-sm"
+                    className="hidden lg:flex items-center space-x-1.5 bg-[#ffffff] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] rounded-xl px-3 py-1.5 text-xs text-[#443a2b]"
                   >
                     <User className="w-3.5 h-3.5 text-[#b45309]" />
                     <span className="font-mono font-medium max-w-[120px] truncate">{user.email}</span>
@@ -142,7 +142,7 @@ export default function Navbar({
                 <button
                   onClick={onLogOut}
                   title="Sign out of current session"
-                  className="bg-[#ffffff] hover:bg-[#fee2e2] text-[#443a2b] hover:text-[#b91c1c] border border-[#e8d4a8] border-b-3 border-[#d8c292] active:border-b active:translate-y-0.5 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all shadow-sm"
+                  className="bg-[#ffffff] hover:bg-[#fee2e2] text-[#443a2b] hover:text-[#b91c1c] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] active:translate-y-0.5 active:shadow-[0_1px_0_#d8c292] px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Log Out</span>
@@ -161,7 +161,7 @@ export default function Navbar({
 
                 <button
                   onClick={onOpenLoginModal}
-                  className="btn-3d-gold px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center space-x-1.5"
+                  className="btn-3d-gold px-4 py-2 rounded-xl text-xs font-bold tracking-wide flex items-center space-x-1.5"
                 >
                   <LogIn className="w-3.5 h-3.5 text-white" />
                   <span>Sign In</span>

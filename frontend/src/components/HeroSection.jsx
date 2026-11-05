@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, ShieldCheck, Sliders, CheckCircle2, Sparkles, LogIn, TrendingDown, Scale } from 'lucide-react';
+import { ArrowRight, ShieldCheck, Sliders, CheckCircle2, Sparkles, LogIn } from 'lucide-react';
 
 export default function HeroSection({ onSignIn, onTryDemo }) {
   return (
@@ -14,7 +14,7 @@ export default function HeroSection({ onSignIn, onTryDemo }) {
           {/* Left Column (7 cols) */}
           <div className="lg:col-span-7 text-left">
             {/* Top Carnival Stamp Badge */}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-lg bg-[#4c1d95] text-white border border-[#3b1575] border-b-3 border-[#280c54] text-xs font-mono font-bold mb-6 shadow-sm">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-lg bg-[#4c1d95] text-white border border-[#3b1575] shadow-[0_3px_0_#280c54] text-xs font-mono font-bold mb-6">
               <span className="w-2 h-2 rounded-full bg-[#fde68a] animate-ping"></span>
               <span className="tracking-wider uppercase">DEFI RISK WORKBENCH • AAVE V3</span>
               <span className="text-[#ddd6fe] opacity-50">•</span>
@@ -62,7 +62,7 @@ export default function HeroSection({ onSignIn, onTryDemo }) {
 
           {/* Right Column: 3D Carnival Scenario Ticket Stubs (5 cols) */}
           <div className="lg:col-span-5">
-            <div className="bg-[#f5e8cc] border-2 border-[#e8d4a8] border-b-4 border-[#d8c292] rounded-2xl p-5 shadow-lg space-y-4">
+            <div className="bg-[#f5e8cc] border border-[#e8d4a8] shadow-[0_4px_0_#d8c292] rounded-2xl p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-[#e8d4a8] pb-3">
                 <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#b45309] flex items-center gap-1.5">
                   <Sliders className="w-3.5 h-3.5" /> Instant Stress Matrix
@@ -152,7 +152,7 @@ export default function HeroSection({ onSignIn, onTryDemo }) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Step 1 */}
             <div className="paper-card p-6 rounded-2xl transition-all hover:shadow-paper-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#4c1d95] text-white flex items-center justify-center font-mono font-black text-sm mb-4 border border-[#3b1575] border-b-3 border-[#280c54] shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-[#4c1d95] text-white flex items-center justify-center font-mono font-black text-sm mb-4 border border-[#3b1575] shadow-[0_3px_0_#280c54]">
                 01
               </div>
               <h3 className="text-base font-heritage font-bold text-[#1c1812] mb-2 flex items-center space-x-2">
@@ -166,7 +166,7 @@ export default function HeroSection({ onSignIn, onTryDemo }) {
 
             {/* Step 2 */}
             <div className="paper-card p-6 rounded-2xl transition-all hover:shadow-paper-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#b45309] text-white flex items-center justify-center font-mono font-black text-sm mb-4 border border-[#924309] border-b-3 border-[#78350f] shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-[#b45309] text-white flex items-center justify-center font-mono font-black text-sm mb-4 border border-[#924309] shadow-[0_3px_0_#78350f]">
                 02
               </div>
               <h3 className="text-base font-heritage font-bold text-[#1c1812] mb-2 flex items-center space-x-2">
@@ -180,7 +180,7 @@ export default function HeroSection({ onSignIn, onTryDemo }) {
 
             {/* Step 3 */}
             <div className="paper-card p-6 rounded-2xl transition-all hover:shadow-paper-lg">
-              <div className="w-10 h-10 rounded-xl bg-[#b91c1c] text-white flex items-center justify-center font-mono font-black text-sm mb-4 border border-[#991515] border-b-3 border-[#7f1d1d] shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-[#b91c1c] text-white flex items-center justify-center font-mono font-black text-sm mb-4 border border-[#991515] shadow-[0_3px_0_#7f1d1d]">
                 03
               </div>
               <h3 className="text-base font-heritage font-bold text-[#1c1812] mb-2 flex items-center space-x-2">
