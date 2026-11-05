@@ -221,13 +221,13 @@ class PositionDetailResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 class SimulationRequest(BaseModel):
-    position_id: str = Field(
-        ...,
+    position_id: Optional[str] = Field(
+        default="pos_aave_v3_eth",
         description="Target personal position ID to stress test"
     )
     custom_shocks: Optional[List[float]] = Field(
         default=None,
-        description="Optional list of percentage shocks between -0.05 and -0.70 (e.g., [-0.10, -0.20, -0.30, -0.40, -0.50])"
+        description="Optional list of percentage shocks between -0.05 and -0.70"
     )
     repay_amounts_usd: Optional[List[float]] = Field(
         default=None,
@@ -237,6 +237,13 @@ class SimulationRequest(BaseModel):
         default=None,
         description="Specific additional collateral values in USD to simulate depositing"
     )
+    # Direct simulation parameters (e.g. from Telegram bot or external clients)
+    collateral_amount: Optional[float] = None
+    collateral_price_usd: Optional[float] = None
+    debt_usd: Optional[float] = None
+    liquidation_threshold: Optional[float] = None
+    price_shock_pct: Optional[float] = None
+    rescue_budget_usd: Optional[float] = None
 
     @field_validator("custom_shocks")
     @classmethod
@@ -382,5 +389,29 @@ class AuthResponse(BaseModel):
     user: UserProfile
     token: str
     message: str
+
+
+# ---------------------------------------------------------------------------
+# Telegram Bot Integration Schemas
+# ---------------------------------------------------------------------------
+
+class TelegramVerifyResponse(BaseModel):
+    success: bool
+    chat_id: Optional[str] = None
+    username: Optional[str] = None
+    message: Optional[str] = None
+
+
+class TelegramAlertRequest(BaseModel):
+    chat_id: str = Field(..., description="Target Telegram chat ID")
+    health_factor: float = Field(default=1.04, description="Simulated or active Health Factor")
+    shock_pct: float = Field(default=25.0, description="Market drop percentage to report")
+
+
+class TelegramAlertResponse(BaseModel):
+    success: bool
+    message: Optional[str] = None
+    chat_id: Optional[str] = None
+
 
 

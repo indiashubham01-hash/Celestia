@@ -91,5 +91,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  // 6. Telegram Bot Integration
+  verifyTelegram: () =>
+    request('/api/alerts/telegram/verify', {
+      method: 'POST',
+    }),
+  sendTelegramAlert: (data) =>
+    request('/api/alerts/telegram/send-alert', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };
 

@@ -154,7 +154,20 @@ async def run_tests():
         print(f"     * Repay $10,000 HF: {step_50['repay_debt_scenarios'][-1]['simulated_health_factor']}")
         print(f"     * Add $10,000 Collateral HF: {step_50['add_collateral_scenarios'][-1]['simulated_health_factor']}")
 
-        # 7. Alert Preferences & Channel Linking
+        # 6b. Direct Simulation Payload (from Telegram bot)
+        direct_payload = {
+            "collateral_amount": 2.5,
+            "collateral_price_usd": 3000.0,
+            "debt_usd": 4500.0,
+            "liquidation_threshold": 0.825,
+            "price_shock_pct": -35.0,
+            "rescue_budget_usd": 750.0,
+        }
+        res_direct = await client.post("/api/simulations", json=direct_payload)
+        assert res_direct.status_code == 200
+        direct_data = res_direct.json()
+        assert len(direct_data["results"]) == 1
+        print("✅ POST /api/simulations (Direct Bot Payload): OK - Calculated -35% crash scenario")
         print("\n--- Testing /api/alerts ---")
         res_pref = await client.get("/api/alerts/preferences")
         assert res_pref.status_code == 200
@@ -181,6 +194,23 @@ async def run_tests():
         assert channel_data["verification_status"] == "PENDING_VERIFICATION"
         assert "verification_code" in channel_data
         print(f"✅ POST /api/alerts/link-channel: Verification Code {channel_data['verification_code']}")
+
+        # 8. Telegram Bot Endpoints
+        print("\n--- Testing /api/alerts/telegram ---")
+        res_tg_verify = await client.post("/api/alerts/telegram/verify")
+        assert res_tg_verify.status_code == 200
+        tg_data = res_tg_verify.json()
+        assert "success" in tg_data
+        print(f"✅ POST /api/alerts/telegram/verify: OK (success={tg_data['success']})")
+
+        res_tg_alert = await client.post(
+            "/api/alerts/telegram/send-alert",
+            json={"chat_id": "test_chat_id", "health_factor": 1.045, "shock_pct": 30.0},
+        )
+        assert res_tg_alert.status_code == 200
+        alert_data = res_tg_alert.json()
+        assert "success" in alert_data
+        print(f"✅ POST /api/alerts/telegram/send-alert: OK (chat_id={alert_data.get('chat_id')})")
 
         print("\n🎉 ALL BACKEND ENDPOINTS AND TESTS PASSED SUCCESSFULLY!")
 

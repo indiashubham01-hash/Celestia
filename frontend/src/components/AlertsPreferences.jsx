@@ -11,6 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { api } from '../services/api';
+import TelegramModal from './TelegramModal';
 
 export default function AlertsPreferences() {
   const [prefs, setPrefs] = useState({
@@ -19,10 +20,14 @@ export default function AlertsPreferences() {
     price_drop_warning_pct: -15.0,
     liquidation_distance_warning_pct: 20.0,
     email_enabled: true,
-    telegram_enabled: false,
+    telegram_enabled: Boolean(localStorage.getItem('bachega_telegram_chat_id')),
     whatsapp_enabled: false,
     frequency: 'IMMEDIATE',
   });
+
+  const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+  const [telegramChatId, setTelegramChatId] = useState(() => localStorage.getItem('bachega_telegram_chat_id') || '');
+  const [telegramUsername, setTelegramUsername] = useState(() => localStorage.getItem('bachega_telegram_username') || '');
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,6 +40,14 @@ export default function AlertsPreferences() {
   const [channelConsent, setChannelConsent] = useState(false);
   const [linkResult, setLinkResult] = useState(null);
   const [linking, setLinking] = useState(false);
+
+  const handleTelegramVerified = ({ chat_id, username }) => {
+    setTelegramChatId(chat_id);
+    setTelegramUsername(username);
+    setPrefs((prev) => ({ ...prev, telegram_enabled: true }));
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 4000);
+  };
 
   useEffect(() => {
     async function loadPreferences() {
@@ -233,29 +246,45 @@ export default function AlertsPreferences() {
 
           <div className="space-y-3">
             {/* Telegram Channel */}
-            <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] border-b-2 border-[#d8c292] flex items-center justify-between">
+            <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center space-x-3.5">
-                <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-white flex items-center justify-center font-bold shadow-sm">
-                  <MessageSquare className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-white flex items-center justify-center font-bold shadow-[0_2px_0_#280c54]">
+                  <MessageSquare className="w-4 h-4 text-[#fef3c7]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-heritage font-black text-[#1c1812]">Telegram Alerts Bot</h4>
+                  <div className="flex items-center space-x-2">
+                    <h4 className="text-sm font-heritage font-black text-[#1c1812]">Telegram Alerts Bot</h4>
+                    <span className="text-[10px] font-mono font-bold bg-white text-[#4c1d95] px-1.5 py-0.2 rounded border border-[#e8d4a8]">
+                      @Bachega_bot
+                    </span>
+                  </div>
                   <p className="text-xs text-[#443a2b] font-sans">Instant push notifications for critical liquidation risks</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setChannelToLink('telegram');
-                    setLinkResult(null);
-                    setLinkModalOpen(true);
-                  }}
-                  className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#fef3c7] text-[#1c1812] text-xs font-bold border border-[#e8d4a8] border-b-2 border-[#d8c292] active:border-b active:translate-y-0.5 transition-all shadow-sm"
-                >
-                  Verify Channel
-                </button>
+              <div className="flex items-center space-x-2.5">
+                {telegramChatId ? (
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#dcfce7] text-[#166534] border border-[#86efac]">
+                      Connected: @{telegramUsername || 'Verified'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsTelegramModalOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-[#fef3c7] text-[#4c1d95] text-xs font-bold border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] active:translate-y-0.5 transition-all"
+                    >
+                      Send Test Alert
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsTelegramModalOpen(true)}
+                    className="px-3.5 py-1.5 rounded-xl btn-3d-gold text-xs font-bold"
+                  >
+                    Verify Channel
+                  </button>
+                )}
                 <input
                   type="checkbox"
                   checked={prefs.telegram_enabled}
@@ -439,6 +468,15 @@ export default function AlertsPreferences() {
           </div>
         </div>
       )}
+
+      {/* Dedicated Telegram Bot Verification & Test Alert Modal */}
+      <TelegramModal
+        isOpen={isTelegramModalOpen}
+        onClose={() => setIsTelegramModalOpen(false)}
+        onTelegramVerified={handleTelegramVerified}
+        initialChatId={telegramChatId}
+        initialUsername={telegramUsername}
+      />
     </div>
   );
 }

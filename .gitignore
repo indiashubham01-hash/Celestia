@@ -25,7 +25,12 @@ wheels/
 
 # Secrets & Environment variables
 .env
+.env*
+*.env
 *.env.local
+frontend/.env*
+*.local
+!*.example
 
 # Node & Frontend
 node_modules/

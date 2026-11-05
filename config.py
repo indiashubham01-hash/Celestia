@@ -46,6 +46,14 @@ class Settings(BaseModel):
         )
     )
 
+    # Telegram Bot Service
+    TELEGRAM_BOT_TOKEN: str = Field(
+        default_factory=lambda: os.getenv("TELEGRAM_BOT_TOKEN", "")
+    )
+    TELEGRAM_BOT_USERNAME: str = Field(
+        default_factory=lambda: os.getenv("TELEGRAM_BOT_USERNAME", "@Bachega_bot")
+    )
+
     # Core Policy and Disclaimer
     SIMULATION_DISCLAIMER: str = "Simulation, not prediction."
 

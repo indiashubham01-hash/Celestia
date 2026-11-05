@@ -33,7 +33,7 @@ Active DeFi borrowers operating in high-volatility cryptocurrency markets on Eth
 
 ## Evidence on Hand
 - Production FastAPI backend (`main.py`, `engine.py`, `services.py`, `schemas.py`, `db.py`)
-- Live CoinGecko API integration (`CG-AUV4LMFJpmFUMvF8FgUMQd4v`) and Alchemy RPC integration (`alch_B1ZVJ7duLPCuUXaQ5wKLR`)
+- Live CoinGecko API and Alchemy RPC integrations configured securely via environment variables (.env)
 - React 18 + Vite + Tailwind CSS frontend dashboard in `frontend/`
 - Automated test suite (`test_app.py`) verifying all endpoints and math
 

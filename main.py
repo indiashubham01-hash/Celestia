@@ -34,9 +34,13 @@ from schemas import (
     VerifyOtpRequest,
     GoogleAuthRequest,
     AuthResponse,
+    TelegramVerifyResponse,
+    TelegramAlertRequest,
+    TelegramAlertResponse,
 )
 import db
 from services import price_service, alchemy_service
+import telegram_service
 import engine
 
 app = FastAPI(
@@ -535,20 +539,51 @@ async def run_simulation(payload: SimulationRequest):
       - Explicit assumptions and model limitations
       - Current timestamp and deterministic NumPy calculations
     """
-    pos = db.get_position_by_id(payload.position_id)
-    if not pos:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Position '{payload.position_id}' not found.",
-        )
-
-    spot_prices = await price_service.get_spot_prices()
+    if payload.collateral_amount and payload.collateral_price_usd and payload.debt_usd:
+        raw_lt = payload.liquidation_threshold or 0.825
+        lt_pct = (raw_lt * 100.0) if raw_lt <= 1.0 else raw_lt
+        pos = {
+            "position_id": "pos_custom_simulation",
+            "protocol": "Aave v3",
+            "chain": "arbitrum",
+            "collaterals": [{
+                "symbol": "ETH",
+                "amount": float(payload.collateral_amount),
+                "spot_price_usd": float(payload.collateral_price_usd),
+                "liquidation_threshold_pct": float(lt_pct),
+                "max_ltv_pct": 80.0,
+                "is_volatile": True,
+            }],
+            "debts": [{
+                "symbol": "USDC",
+                "amount": float(payload.debt_usd),
+                "spot_price_usd": 1.0,
+                "borrow_apy_pct": 5.0,
+                "borrow_type": "VARIABLE",
+            }],
+        }
+        shocks = [payload.price_shock_pct / 100.0] if payload.price_shock_pct else payload.custom_shocks
+        repays = [payload.rescue_budget_usd] if payload.rescue_budget_usd else payload.repay_amounts_usd
+        collats = [payload.rescue_budget_usd] if payload.rescue_budget_usd else payload.add_collateral_amounts_usd
+        spot_prices = {"ETH": {"usd": float(payload.collateral_price_usd)}}
+    else:
+        target_pos_id = payload.position_id or "pos_aave_v3_eth"
+        pos = db.get_position_by_id(target_pos_id)
+        if not pos:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Position '{target_pos_id}' not found.",
+            )
+        shocks = payload.custom_shocks
+        repays = payload.repay_amounts_usd
+        collats = payload.add_collateral_amounts_usd
+        spot_prices = await price_service.get_spot_prices()
 
     simulation_result = engine.execute_stress_test_simulation(
         position_data=pos,
-        custom_shocks=payload.custom_shocks,
-        repay_amounts_usd=payload.repay_amounts_usd,
-        add_collateral_amounts_usd=payload.add_collateral_amounts_usd,
+        custom_shocks=shocks,
+        repay_amounts_usd=repays,
+        add_collateral_amounts_usd=collats,
         spot_prices=spot_prices,
     )
 
@@ -624,6 +659,40 @@ async def link_channel(payload: LinkChannelRequest):
         deep_link=channel_record["deep_link"],
         expires_at=channel_record["expires_at"],
     )
+
+
+@app.post(
+    "/api/alerts/telegram/verify",
+    response_model=TelegramVerifyResponse,
+    tags=["Alerts"],
+    summary="Verify incoming chat from @Bachega_bot on Telegram",
+)
+async def verify_telegram_chat():
+    """
+    Checks Telegram Bot getUpdates API for recent /start or chat interactions.
+    If found, immediately dispatches confirmation message and returns chat_id + username.
+    """
+    result = await telegram_service.verify_latest_update()
+    return TelegramVerifyResponse(**result)
+
+
+@app.post(
+    "/api/alerts/telegram/send-alert",
+    response_model=TelegramAlertResponse,
+    tags=["Alerts"],
+    summary="Send real-time liquidation risk alert to verified Telegram chat",
+)
+async def send_telegram_alert(payload: TelegramAlertRequest):
+    """
+    Sends formatted markdown liquidation risk warning message to the verified Telegram chat.
+    """
+    result = await telegram_service.send_liquidation_alert(
+        chat_id=payload.chat_id,
+        health_factor=payload.health_factor,
+        shock_pct=payload.shock_pct,
+    )
+    return TelegramAlertResponse(**result)
+
 
 
 # ---------------------------------------------------------------------------
