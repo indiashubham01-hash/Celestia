@@ -140,12 +140,64 @@ ALERT_PREFERENCES_STORE: Dict[str, Any] = {
     "telegram_enabled": False,
     "whatsapp_enabled": False,
     "frequency": "IMMEDIATE",
+    "telegram_verified": False,
+    "telegram_chat_id": None,
+    "telegram_username": None,
 }
 
 CHANNEL_LINKS_STORE: Dict[str, Dict[str, Any]] = {}
+USER_TELEGRAM_STORE: Dict[str, Dict[str, Any]] = {}
 
 
 # Database Access Functions
+
+def set_user_telegram_status(
+    user_id: str,
+    chat_id: str,
+    username: str,
+    verified: bool = True,
+) -> Dict[str, Any]:
+    """Records Telegram link status for a specific user."""
+    record = {
+        "user_id": user_id,
+        "telegram_chat_id": str(chat_id),
+        "telegram_username": username,
+        "telegram_verified": verified,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    USER_TELEGRAM_STORE[user_id] = record
+
+    # Also update global alert preferences store so existing dashboard views reflect it
+    ALERT_PREFERENCES_STORE["telegram_enabled"] = verified
+    ALERT_PREFERENCES_STORE["telegram_chat_id"] = str(chat_id)
+    ALERT_PREFERENCES_STORE["telegram_username"] = username
+    ALERT_PREFERENCES_STORE["telegram_verified"] = verified
+    return record
+
+
+def get_user_telegram_status(user_id: Optional[str] = None) -> Dict[str, Any]:
+    """Retrieves Telegram verification status for user_id or demo user."""
+    if user_id and user_id in USER_TELEGRAM_STORE:
+        record = USER_TELEGRAM_STORE[user_id]
+        return {
+            "verified": bool(record.get("telegram_verified", False)),
+            "telegram_username": record.get("telegram_username", ""),
+            "telegram_chat_id": record.get("telegram_chat_id", ""),
+        }
+
+    # If demo user or fallback check
+    if ALERT_PREFERENCES_STORE.get("telegram_verified"):
+        return {
+            "verified": True,
+            "telegram_username": ALERT_PREFERENCES_STORE.get("telegram_username") or "",
+            "telegram_chat_id": ALERT_PREFERENCES_STORE.get("telegram_chat_id") or "",
+        }
+
+    return {
+        "verified": False,
+        "telegram_username": "",
+        "telegram_chat_id": "",
+    }
 
 def get_current_user_profile() -> Dict[str, Any]:
     user = USER_STORE["user_01"].copy()

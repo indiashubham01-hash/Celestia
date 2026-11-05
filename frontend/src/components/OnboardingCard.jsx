@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, ArrowRight, CheckCircle2, AlertCircle, Sparkles, Loader2 } from 'lucide-react';
+import TelegramConnectCard from './TelegramConnectCard';
 
 const CHAINS = [
   { id: 'ethereum', name: 'Ethereum Mainnet', symbol: 'ETH' },
@@ -150,6 +151,11 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
               <span>{error}</span>
             </div>
           )}
+
+          {/* 1-Click Telegram Push Alerts Connector */}
+          <div className="pt-1">
+            <TelegramConnectCard currentUser={user} />
+          </div>
 
           {/* Action Buttons */}
           <div className="pt-2 flex items-center justify-between">

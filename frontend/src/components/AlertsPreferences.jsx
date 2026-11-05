@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import TelegramModal from './TelegramModal';
+import TelegramConnectCard from './TelegramConnectCard';
 
 export default function AlertsPreferences() {
   const [prefs, setPrefs] = useState({
@@ -243,6 +244,23 @@ export default function AlertsPreferences() {
             <MessageSquare className="w-4 h-4 text-[#4c1d95]" />
             <span>Delivery Channels &amp; Verified Opt-Ins</span>
           </h3>
+
+          {/* 1-Click Telegram Deep-link Connect Card */}
+          <TelegramConnectCard
+            currentUser={{
+              id: (() => {
+                try {
+                  const saved = localStorage.getItem('bachega_user');
+                  return saved ? JSON.parse(saved).id : 'usr_pitch_demo';
+                } catch {
+                  return 'usr_pitch_demo';
+                }
+              })(),
+            }}
+            onVerified={handleTelegramVerified}
+            isAlertChecked={prefs.telegram_enabled}
+            onToggleAlert={(val) => setPrefs((prev) => ({ ...prev, telegram_enabled: val }))}
+          />
 
           <div className="space-y-3">
             {/* Telegram Channel */}

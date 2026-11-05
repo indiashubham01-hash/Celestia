@@ -414,4 +414,16 @@ class TelegramAlertResponse(BaseModel):
     chat_id: Optional[str] = None
 
 
+class TelegramStatusResponse(BaseModel):
+    verified: bool
+    telegram_username: str = ""
+
+
+class TelegramRegisterRequest(BaseModel):
+    user_id: str
+    chat_id: str
+    username: str
+
+
+
 

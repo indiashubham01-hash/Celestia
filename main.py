@@ -37,6 +37,8 @@ from schemas import (
     TelegramVerifyResponse,
     TelegramAlertRequest,
     TelegramAlertResponse,
+    TelegramStatusResponse,
+    TelegramRegisterRequest,
 )
 import db
 from services import price_service, alchemy_service
@@ -692,6 +694,81 @@ async def send_telegram_alert(payload: TelegramAlertRequest):
         shock_pct=payload.shock_pct,
     )
     return TelegramAlertResponse(**result)
+
+
+@app.get(
+    "/api/alerts/telegram/status",
+    response_model=TelegramStatusResponse,
+    tags=["Alerts"],
+    summary="Check Telegram verification status for user",
+)
+async def get_telegram_status(user_id: Optional[str] = Query(None)):
+    """
+    Checks if telegram_verified is true in Supabase or local store for this user.
+    Returns { "verified": bool, "telegram_username": str }
+    """
+    # 1. Check local in-memory store
+    local_status = db.get_user_telegram_status(user_id)
+    if local_status.get("verified"):
+        return TelegramStatusResponse(
+            verified=True,
+            telegram_username=local_status.get("telegram_username", ""),
+        )
+
+    # 2. Check Supabase alert_preferences if configured
+    supabase_url = os.getenv("VITE_SUPABASE_URL") or os.getenv("SUPABASE_URL")
+    supabase_key = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("VITE_SUPABASE_ANON_KEY")
+        or os.getenv("SUPABASE_KEY")
+    )
+    if supabase_url and supabase_key and user_id:
+        try:
+            import httpx
+            headers = {
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+            }
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                res = await client.get(
+                    f"{supabase_url.rstrip('/')}/rest/v1/alert_preferences?user_id=eq.{user_id}&select=telegram_verified,telegram_username",
+                    headers=headers,
+                )
+                if res.status_code == 200:
+                    rows = res.json()
+                    if rows and len(rows) > 0 and rows[0].get("telegram_verified"):
+                        username = rows[0].get("telegram_username", "")
+                        db.set_user_telegram_status(user_id, "", username, verified=True)
+                        return TelegramStatusResponse(
+                            verified=True,
+                            telegram_username=username,
+                        )
+        except Exception:
+            pass
+
+    return TelegramStatusResponse(
+        verified=False,
+        telegram_username="",
+    )
+
+
+@app.post(
+    "/api/alerts/telegram/register",
+    tags=["Alerts"],
+    summary="Register verified Telegram chat from /start deep link",
+)
+async def register_telegram_chat(payload: TelegramRegisterRequest):
+    """
+    Registers the verified chat ID and username for a specific user ID.
+    """
+    record = db.set_user_telegram_status(
+        user_id=payload.user_id,
+        chat_id=payload.chat_id,
+        username=payload.username,
+        verified=True,
+    )
+    return {"success": True, **record}
+
 
 
 

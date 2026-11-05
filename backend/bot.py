@@ -160,13 +160,101 @@ def generate_llm_response(prompt: str) -> str:
 # Telegram Handlers
 # ---------------------------------------------------------------------------
 
-async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handles /start command."""
-    if update.message:
-        await update.message.reply_text(
-            GREETING_TEXT,
-            parse_mode="Markdown"
+async def link_user_telegram(user_id: str, chat_id: int, username: str) -> None:
+    """
+    Updates Supabase table alert_preferences or monitored_wallets and notifies
+    the Bachega.fi backend API.
+    """
+    # 1. Update backend server state via HTTP
+    try:
+        register_url = f"{BACKEND_URL}/api/alerts/telegram/register"
+        await asyncio.to_thread(
+            requests.post,
+            register_url,
+            json={
+                "user_id": user_id,
+                "chat_id": str(chat_id),
+                "username": username,
+            },
+            timeout=4.0,
         )
+        logger.info(f"Registered Telegram link with backend for user {user_id}")
+    except Exception as e:
+        logger.warning(f"Backend registration error: {e}")
+
+    # 2. Update Supabase table alert_preferences directly if configured
+    supabase_url = os.getenv("VITE_SUPABASE_URL") or os.getenv("SUPABASE_URL")
+    supabase_key = (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("VITE_SUPABASE_ANON_KEY")
+        or os.getenv("SUPABASE_KEY")
+    )
+    if supabase_url and supabase_key:
+        try:
+            rest_url = f"{supabase_url.rstrip('/')}/rest/v1/alert_preferences"
+            headers = {
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates",
+            }
+            payload = {
+                "user_id": user_id,
+                "telegram_chat_id": str(chat_id),
+                "telegram_username": username,
+                "telegram_verified": True,
+            }
+            await asyncio.to_thread(
+                requests.post,
+                rest_url,
+                json=payload,
+                headers=headers,
+                timeout=5.0,
+            )
+            logger.info(f"Updated Supabase alert_preferences for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Supabase update error: {e}")
+
+
+async def start_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """
+    Handles /start command:
+    - If user launched via deep link (e.g. /start <user_id>), extracts user_id,
+      links the Telegram account in backend and Supabase, and dispatches:
+      "✅ *Registration Successful!*\n\nYou have successfully registered with the *Bachega.fi Alerts Bot*.\n\nYour account is now linked. We will push instant alerts directly to this chat if any flash crash threatens your collateral."
+    - If normal /start without argument, displays standard welcome card and sample prompts.
+    """
+    if not update.message:
+        return
+
+    chat_id = update.effective_chat.id
+    raw_user = update.effective_user or update.effective_chat
+    username = raw_user.username or raw_user.first_name or "DeFi Borrower"
+
+    # Deep-link 1-click onboarding check (/start <user_id>)
+    if context.args and len(context.args) > 0:
+        user_id = context.args[0].strip()
+        logger.info(f"Linking Telegram for user_id={user_id}, chat_id={chat_id}, username={username}")
+
+        # Link user in backend and Supabase
+        await link_user_telegram(user_id=user_id, chat_id=chat_id, username=username)
+
+        # Automated welcome message
+        success_text = (
+            "✅ *Registration Successful!*\n\n"
+            "You have successfully registered with the *Bachega.fi Alerts Bot*.\n\n"
+            "Your account is now linked. We will push instant alerts directly to this chat "
+            "if any flash crash threatens your collateral."
+        )
+        await update.message.reply_text(success_text, parse_mode="Markdown")
+        return
+
+    # Normal /start without arguments
+    await update.message.reply_text(
+        GREETING_TEXT,
+        parse_mode="Markdown"
+    )
+
 
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

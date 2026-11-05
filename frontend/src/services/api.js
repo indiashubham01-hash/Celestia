@@ -97,6 +97,13 @@ export const api = {
     request('/api/alerts/telegram/verify', {
       method: 'POST',
     }),
+  getTelegramStatus: (userId) =>
+    request(`/api/alerts/telegram/status${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`),
+  registerTelegramChat: (data) =>
+    request('/api/alerts/telegram/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
   sendTelegramAlert: (data) =>
     request('/api/alerts/telegram/send-alert', {
       method: 'POST',

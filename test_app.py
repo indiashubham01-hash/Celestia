@@ -203,6 +203,29 @@ async def run_tests():
         assert "success" in tg_data
         print(f"✅ POST /api/alerts/telegram/verify: OK (success={tg_data['success']})")
 
+        # Test Status before registration
+        res_status_before = await client.get("/api/alerts/telegram/status?user_id=new_user_99")
+        assert res_status_before.status_code == 200
+        assert res_status_before.json()["verified"] is False
+        print("✅ GET /api/alerts/telegram/status (unregistered): OK - returned verified=False")
+
+        # Test Register from /start deep link
+        res_register = await client.post(
+            "/api/alerts/telegram/register",
+            json={"user_id": "usr_pitch_demo", "chat_id": "987654321", "username": "defi_whale"},
+        )
+        assert res_register.status_code == 200
+        assert res_register.json()["success"] is True
+        print("✅ POST /api/alerts/telegram/register: OK - registered usr_pitch_demo with chat 987654321")
+
+        # Test Status after registration
+        res_status_after = await client.get("/api/alerts/telegram/status?user_id=usr_pitch_demo")
+        assert res_status_after.status_code == 200
+        status_after_data = res_status_after.json()
+        assert status_after_data["verified"] is True
+        assert status_after_data["telegram_username"] == "defi_whale"
+        print(f"✅ GET /api/alerts/telegram/status (registered): OK - verified=True, username={status_after_data['telegram_username']}")
+
         res_tg_alert = await client.post(
             "/api/alerts/telegram/send-alert",
             json={"chat_id": "test_chat_id", "health_factor": 1.045, "shock_pct": 30.0},
