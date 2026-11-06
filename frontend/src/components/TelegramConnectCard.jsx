@@ -34,7 +34,7 @@ export default function TelegramConnectCard({
   const pollIntervalRef = useRef(null);
 
   // Deep Link target
-  const botLink = `https://t.me/Bachega_bot?start=${encodeURIComponent(userId)}`;
+  const botLink = `https://t.me/Bachegafi_bot?start=${encodeURIComponent(userId)}`;
 
   // Polling logic: Checks status every 3 seconds
   useEffect(() => {
@@ -141,7 +141,7 @@ export default function TelegramConnectCard({
           </div>
           <p className="text-xs text-black/80 font-sans leading-relaxed font-medium">
             Get real-time warnings before liquidation strikes your loan. When markets flash crash,
-            @Bachega_bot sends immediate rescue advice directly to your phone.
+            @Bachegafi_bot sends immediate rescue advice directly to your phone.
           </p>
         </div>
 
@@ -153,7 +153,7 @@ export default function TelegramConnectCard({
               onClick={handleConnectClick}
               className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1a8dc4] text-white text-xs font-black uppercase tracking-wider transition-all border-2 border-black shadow-[3px_3px_0_#000] active:translate-x-[1px] active:translate-y-[1px]"
             >
-              <span>Connect @Bachega_bot</span>
+              <span>Connect @Bachegafi_bot</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           ) : (

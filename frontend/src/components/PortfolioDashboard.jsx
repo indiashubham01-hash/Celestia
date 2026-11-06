@@ -427,7 +427,7 @@ export default function PortfolioDashboard({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-base font-black text-black">
-                Telegram Risk Assistant &amp; Push Alerts (@Bachega_bot)
+                Telegram Risk Assistant &amp; Push Alerts (@Bachegafi_bot)
               </h3>
               {telegramConnected ? (
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-[#86efac] text-[#065f46] border border-black shadow-[1px_1px_0_#000]">

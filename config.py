@@ -51,7 +51,7 @@ class Settings(BaseModel):
         default_factory=lambda: os.getenv("TELEGRAM_BOT_TOKEN", "")
     )
     TELEGRAM_BOT_USERNAME: str = Field(
-        default_factory=lambda: os.getenv("TELEGRAM_BOT_USERNAME", "@Bachega_bot")
+        default_factory=lambda: os.getenv("TELEGRAM_BOT_USERNAME", "@Bachegafi_bot")
     )
 
     # Core Policy and Disclaimer

@@ -41,7 +41,7 @@ load_dotenv()
 # ---------------------------------------------------------------------------
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "@Bachega_bot").strip()
+BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "@Bachegafi_bot").strip()
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 

@@ -273,7 +273,7 @@ export default function AlertsPreferences() {
                   <div className="flex items-center space-x-2">
                     <h4 className="text-sm font-black text-black">Telegram Alerts Bot</h4>
                     <span className="text-[10px] font-mono font-black bg-[#fef08a] text-black px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
-                      @Bachega_bot
+                      @Bachegafi_bot
                     </span>
                   </div>
                   <p className="text-xs text-black/70 font-sans font-medium">Instant push notifications for critical liquidation risks</p>

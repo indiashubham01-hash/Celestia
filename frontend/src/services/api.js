@@ -638,7 +638,7 @@ export const api = {
       }
 
       // 2. Direct Telegram Bot API dispatch (enables live push on Vercel static deployments)
-      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '9132765758:AAHUAAGWNmX6Zopp9bUl5s914LjaOBtLrWM';
+      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '9021360110:AAHE5uS5WeBlGkrxFQOipIlRWlQoLfnpc5M';
       const hf = data.health_factor != null ? Number(data.health_factor) : 1.048;
       const shock = data.shock_pct != null ? Math.abs(Number(data.shock_pct)) : 25.0;
 

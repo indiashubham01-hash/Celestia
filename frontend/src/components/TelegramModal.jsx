@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 
-const BOT_USERNAME = 'Bachega_bot';
+const BOT_USERNAME = 'Bachegafi_bot';
 
 export default function TelegramModal({
   isOpen,

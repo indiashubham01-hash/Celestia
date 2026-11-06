@@ -140,12 +140,12 @@ export default function Navbar({
             {/* Direct Telegram Bot Connection Button (Always accessible) */}
             <button
               onClick={onOpenTelegramModal}
-              title="Open or link Telegram @Bachega_bot"
+              title="Open or link Telegram @Bachegafi_bot"
               className="bg-[#229ED9] hover:bg-[#1a8dc4] text-white border-2 border-black shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-3 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1.5 transition-all"
             >
               <Send className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">
-                {isTelegramVerified && telegramUsername ? `@${telegramUsername}` : '@Bachega_bot'}
+                {isTelegramVerified && telegramUsername ? `@${telegramUsername}` : '@Bachegafi_bot'}
               </span>
               <span className="sm:hidden">Bot</span>
               {isTelegramVerified ? (

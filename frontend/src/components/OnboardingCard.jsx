@@ -396,13 +396,13 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
             )}
           </div>
 
-          {/* SECTION 3: Connect Telegram Chatbot (@Bachega_bot) */}
+          {/* SECTION 3: Connect Telegram Chatbot (@Bachegafi_bot) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Send className="w-4 h-4 text-[#229ED9]" />
                 <h3 className="text-xs font-mono font-black uppercase text-black">
-                  Step 3: Connect Telegram Risk Bot (@Bachega_bot)
+                  Step 3: Connect Telegram Risk Bot (@Bachegafi_bot)
                 </h3>
               </div>
               <span className="text-[10px] font-mono font-bold text-black/60">
