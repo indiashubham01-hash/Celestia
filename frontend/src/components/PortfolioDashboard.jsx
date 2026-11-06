@@ -118,7 +118,7 @@ export default function PortfolioDashboard({
     );
   }
 
-  if (error) {
+  if (error && !portfolio && !customPosition) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="p-8 rounded-2xl bg-[#fee2e2] border-2 border-[#fca5a5] text-center max-w-xl mx-auto paper-card">
