@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Send,
@@ -13,23 +13,86 @@ import {
 import { api } from '../services/api';
 
 const BOT_USERNAME = 'Bachega_bot';
-const BOT_URL = `https://t.me/${BOT_USERNAME}`;
 
 export default function TelegramModal({
   isOpen,
   onClose,
   onTelegramVerified,
   initialChatId,
-  initialUsername
+  initialUsername,
+  currentUser,
 }) {
-  const [chatId, setChatId] = useState(initialChatId || localStorage.getItem('bachega_telegram_chat_id') || '');
-  const [username, setUsername] = useState(initialUsername || localStorage.getItem('bachega_telegram_username') || '');
+  const userId = currentUser?.id || currentUser?.user_id || 'usr_pitch_demo';
+  const botLink = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(userId)}`;
+
+  const [chatId, setChatId] = useState(
+    () => initialChatId || localStorage.getItem('bachega_telegram_chat_id') || ''
+  );
+  const [username, setUsername] = useState(
+    () => initialUsername || localStorage.getItem('bachega_telegram_username') || ''
+  );
+  const [verified, setVerified] = useState(
+    () => localStorage.getItem('bachega_telegram_verified') === 'true' || Boolean(initialChatId)
+  );
+
   const [verifying, setVerifying] = useState(false);
   const [sendingAlert, setSendingAlert] = useState(false);
   const [error, setError] = useState(null);
   const [alertSuccess, setAlertSuccess] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+
+  const pollIntervalRef = useRef(null);
+
+  // Auto-polling for deep-link confirmation while modal is open
+  useEffect(() => {
+    if (!isOpen || verified) {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      return;
+    }
+
+    const checkStatus = async () => {
+      try {
+        const data = await api.getTelegramStatus(userId);
+        if (data && data.verified) {
+          const userHandle = data.telegram_username || 'borrower';
+          setVerified(true);
+          setUsername(userHandle);
+          setChatId(data.chat_id || 'active_chat');
+
+          localStorage.setItem('bachega_telegram_verified', 'true');
+          localStorage.setItem('bachega_telegram_username', userHandle);
+          localStorage.setItem('bachega_telegram_enabled', 'true');
+
+          if (onTelegramVerified) {
+            onTelegramVerified({
+              verified: true,
+              chat_id: data.chat_id || 'active_chat',
+              username: userHandle,
+            });
+          }
+        }
+      } catch (e) {
+        // Silent failure during polling
+      }
+    };
+
+    pollIntervalRef.current = setInterval(checkStatus, 3000);
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, [isOpen, verified, userId, onTelegramVerified]);
 
   if (!isOpen) return null;
+
+  const handleOpenBot = () => {
+    setIsPolling(true);
+    window.open(botLink, '_blank', 'noopener,noreferrer');
+  };
 
   const handleVerify = async () => {
     setVerifying(true);
@@ -37,13 +100,37 @@ export default function TelegramModal({
     setAlertSuccess(false);
 
     try {
+      // 1. First check user_id status
+      const statusRes = await api.getTelegramStatus(userId);
+      if (statusRes && statusRes.verified) {
+        const userHandle = statusRes.telegram_username || 'Borrower';
+        setUsername(userHandle);
+        setChatId('active_chat');
+        setVerified(true);
+
+        localStorage.setItem('bachega_telegram_verified', 'true');
+        localStorage.setItem('bachega_telegram_username', userHandle);
+
+        if (onTelegramVerified) {
+          onTelegramVerified({
+            chat_id: 'active_chat',
+            username: userHandle,
+          });
+        }
+        return;
+      }
+
+      // 2. Fallback to global verifyTelegram endpoint
       const res = await api.verifyTelegram();
       if (res.success && res.chat_id) {
         setChatId(res.chat_id);
         const resolvedUser = res.username || 'Borrower';
         setUsername(resolvedUser);
+        setVerified(true);
+
         localStorage.setItem('bachega_telegram_chat_id', res.chat_id);
         localStorage.setItem('bachega_telegram_username', resolvedUser);
+        localStorage.setItem('bachega_telegram_verified', 'true');
 
         if (onTelegramVerified) {
           onTelegramVerified({
@@ -52,37 +139,33 @@ export default function TelegramModal({
           });
         }
       } else {
-        setError(res.message || 'No chat found. Please open @Bachega_bot and send /start first.');
+        setError(res.message || 'No chat found yet. Please tap Start in the Telegram bot chat first.');
       }
     } catch (err) {
-      setError(err.message || 'Failed to verify with Telegram API. Ensure the backend is reachable.');
+      setError(err.message || 'Failed to verify with Telegram API. Ensure backend is reachable.');
     } finally {
       setVerifying(false);
     }
   };
 
   const handleSendTestAlert = async () => {
-    if (!chatId) {
-      setError('Please verify your Telegram chat before dispatching test alerts.');
-      return;
-    }
-
     setSendingAlert(true);
     setError(null);
     setAlertSuccess(false);
 
     try {
+      const targetChatId = chatId || localStorage.getItem('bachega_telegram_chat_id') || 'test_demo_chat';
       const res = await api.sendTelegramAlert({
-        chat_id: String(chatId),
+        chat_id: String(targetChatId),
         health_factor: 1.048,
         shock_pct: 25.0,
       });
 
-      if (res.success) {
+      if (res && res.success !== false) {
         setAlertSuccess(true);
         setTimeout(() => setAlertSuccess(false), 5000);
       } else {
-        setError(res.message || 'Failed to send test alert.');
+        setError(res.message || 'Failed to dispatch test alert.');
       }
     } catch (err) {
       setError(err.message || 'Error communicating with alert server.');
@@ -105,10 +188,10 @@ export default function TelegramModal({
             </div>
             <div>
               <h3 className="text-base font-black text-black">
-                Telegram Alerts Bot
+                Telegram Alerts Bot (@{BOT_USERNAME})
               </h3>
               <p className="text-[11px] text-black/70 font-medium">
-                Direct on-chain liquidation warnings
+                Live Liquidation Warnings &amp; Quant Chatbot
               </p>
             </div>
           </div>
@@ -123,29 +206,28 @@ export default function TelegramModal({
         {/* Modal Body */}
         <div className="p-6 space-y-5">
           {/* Step 1: Open Bot on Telegram */}
-          <div className="p-4 rounded-xl bg-white border-2 border-black shadow-[3px_3px_0_#000] space-y-2">
+          <div className="p-4 rounded-xl bg-white border-2 border-black shadow-[3px_3px_0_#000] space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="font-mono text-[11px] font-black uppercase tracking-wider text-black">
                 STEP 1: INITIATE BOT CHAT
               </span>
-              <span className="text-[10px] font-mono font-black bg-[#fef08a] text-black px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
-                @{BOT_USERNAME}
+              <span className="text-[10px] font-mono font-black bg-[#229ED9] text-white px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
+                1-CLICK LINK
               </span>
             </div>
 
             <p className="text-xs text-black/80 leading-relaxed font-sans font-medium">
-              Tap Start or send <code className="bg-[#fee2e2] px-1.5 py-0.5 rounded font-mono font-black text-[#dc2626] border border-black/30">/start</code> in the bot chat to authorize automated notifications.
+              Click below to open <strong>@{BOT_USERNAME}</strong> in Telegram and press <strong>START</strong>. This authorizes automated liquidation alerts and stress-test chat.
             </p>
 
-            <a
-              href={BOT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={handleOpenBot}
               className="w-full btn-3d-royal py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2"
             >
               <span>1. Open @{BOT_USERNAME} on Telegram</span>
               <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            </button>
           </div>
 
           {/* Step 2: Verification Status & Button */}
@@ -154,10 +236,10 @@ export default function TelegramModal({
               <span className="font-mono text-[11px] font-black uppercase tracking-wider text-black">
                 STEP 2: CONFIRM CONNECTION
               </span>
-              {chatId && (
+              {verified && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-black bg-[#86efac] text-[#065f46] border-2 border-black shadow-[1px_1px_0_#000]">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Connected: @{username}
+                  Linked: @{username || 'Borrower'}
                 </span>
               )}
             </div>
@@ -190,20 +272,20 @@ export default function TelegramModal({
             </div>
           )}
 
-          {/* Test Alert Dispatch (Unlocked on Success) */}
-          {chatId && (
+          {/* Test Alert Dispatch (Unlocked on Success or If Verified) */}
+          {verified && (
             <div className="pt-3 border-t-2 border-black space-y-3">
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[11px] font-black uppercase tracking-wider text-black flex items-center gap-1.5">
                   <BellRing className="w-3.5 h-3.5 text-[#2563eb]" />
-                  VERIFIED CHAT ID: {chatId}
+                  PUSH NOTIFICATIONS ACTIVE
                 </span>
               </div>
 
               {alertSuccess && (
                 <div className="p-3 rounded-xl bg-[#86efac] border-2 border-black shadow-[2px_2px_0_#000] text-xs text-[#065f46] flex items-center space-x-2 font-black animate-in fade-in">
                   <CheckCircle2 className="w-4 h-4 text-[#065f46]" />
-                  <span>Test warning alert dispatched to your Telegram!</span>
+                  <span>Test warning alert dispatched to your Telegram! Check your phone.</span>
                 </div>
               )}
 
@@ -231,7 +313,7 @@ export default function TelegramModal({
 
         {/* Modal Footer */}
         <div className="px-6 py-3 bg-[#fef08a] border-t-2 border-black flex items-center justify-between text-[11px] text-black font-mono font-bold">
-          <span>Simulation early-warning system</span>
+          <span>Non-custodial early-warning system</span>
           <button
             type="button"
             onClick={onClose}
@@ -244,4 +326,3 @@ export default function TelegramModal({
     </div>
   );
 }
-

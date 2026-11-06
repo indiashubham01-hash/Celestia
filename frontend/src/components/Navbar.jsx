@@ -1,5 +1,17 @@
-import React from 'react';
-import { Shield, Activity, Bell, Sliders, Plus, LogIn, LogOut, Sparkles, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Shield,
+  Activity,
+  Bell,
+  Sliders,
+  Plus,
+  LogIn,
+  LogOut,
+  Sparkles,
+  User,
+  Send,
+  Bot
+} from 'lucide-react';
 
 export default function Navbar({
   currentView,
@@ -11,7 +23,28 @@ export default function Navbar({
   onLogOut,
   user,
   primaryWallet,
+  onOpenTelegramModal,
 }) {
+  const [isTelegramVerified, setIsTelegramVerified] = useState(
+    () => localStorage.getItem('bachega_telegram_verified') === 'true'
+  );
+  const [telegramUsername, setTelegramUsername] = useState(
+    () => localStorage.getItem('bachega_telegram_username') || ''
+  );
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setIsTelegramVerified(localStorage.getItem('bachega_telegram_verified') === 'true');
+      setTelegramUsername(localStorage.getItem('bachega_telegram_username') || '');
+    };
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 2000);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
   const shortenAddress = (addr) => {
     if (!addr) return '';
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -103,7 +136,25 @@ export default function Navbar({
           )}
 
           {/* Right Action Bar */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            {/* Direct Telegram Bot Connection Button (Always accessible) */}
+            <button
+              onClick={onOpenTelegramModal}
+              title="Open or link Telegram @Bachega_bot"
+              className="bg-[#229ED9] hover:bg-[#1a8dc4] text-white border-2 border-black shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-3 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1.5 transition-all"
+            >
+              <Send className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">
+                {isTelegramVerified && telegramUsername ? `@${telegramUsername}` : '@Bachega_bot'}
+              </span>
+              <span className="sm:hidden">Bot</span>
+              {isTelegramVerified ? (
+                <span className="w-2 h-2 rounded-full bg-[#86efac] border border-black animate-pulse" />
+              ) : (
+                <span className="w-2 h-2 rounded-full bg-[#fef08a] border border-black" />
+              )}
+            </button>
+
             {isDashboardView ? (
               <>
                 {/* Active Monitored Wallet Pill with Network Badge */}
@@ -123,10 +174,10 @@ export default function Navbar({
                 <button
                   onClick={onOpenWalletModal}
                   title="Track another public address"
-                  className="btn-3d-gold px-3.5 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1"
+                  className="btn-3d-gold px-3 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Add Wallet</span>
+                  <span className="hidden md:inline">Add Wallet</span>
                 </button>
 
                 {/* User Profile Pill */}
@@ -136,7 +187,9 @@ export default function Navbar({
                     className="hidden lg:flex items-center space-x-1.5 bg-white border-2 border-black shadow-[2px_2px_0_#000000] rounded-lg px-3 py-1.5 text-xs text-black"
                   >
                     <User className="w-3.5 h-3.5 text-[#3b82f6]" />
-                    <span className="font-mono font-bold max-w-[120px] truncate">{user.email}</span>
+                    <span className="font-mono font-bold max-w-[120px] truncate">
+                      {user.user_metadata?.name || user.email}
+                    </span>
                   </div>
                 )}
 
@@ -144,7 +197,7 @@ export default function Navbar({
                 <button
                   onClick={onLogOut}
                   title="Sign out of current session"
-                  className="bg-white hover:bg-[#fca5a5] text-black border-2 border-black shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1.5 transition-all"
+                  className="bg-white hover:bg-[#fca5a5] text-black border-2 border-black shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-3 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1.5 transition-all"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Sign Out</span>
@@ -155,15 +208,15 @@ export default function Navbar({
                 {/* Landing / Onboard Action Buttons */}
                 <button
                   onClick={onTryDemo}
-                  className="btn-3d-royal px-4 py-2 rounded-lg text-xs font-black tracking-wide flex items-center space-x-1.5"
+                  className="btn-3d-royal px-3.5 py-2 rounded-lg text-xs font-black tracking-wide flex items-center space-x-1.5"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-[#fef08a]" />
-                  <span>Try Live Demo</span>
+                  <span>Try Demo</span>
                 </button>
 
                 <button
                   onClick={onOpenLoginModal}
-                  className="btn-3d-gold px-4 py-2 rounded-lg text-xs font-black tracking-wide flex items-center space-x-1.5"
+                  className="btn-3d-gold px-3.5 py-2 rounded-lg text-xs font-black tracking-wide flex items-center space-x-1.5"
                 >
                   <LogIn className="w-3.5 h-3.5 text-black" />
                   <span>Sign In</span>
