@@ -76,46 +76,147 @@ SERVER_OFFLINE_TEXT = (
 # Quantitative Risk Data Model & Smart Contract Formulas
 # ---------------------------------------------------------------------------
 
-@dataclass
-class QuantitativeRiskMetrics:
+def calculate_defi_risk(
+    collateral_amount: float = 2.5,
+    collateral_price_usd: float = 3000.0,
+    debt_usd: float = 4500.0,
+    liquidation_threshold: float = 0.825,
+    price_shock_pct: float = -35.0,
+    rescue_budget_usd: float = 750.0,
+    stable_lt: float = 0.90,
+    target_hf: float = 1.10,
+    collateral_symbol: str = "ETH",
+    debt_symbol: str = "USDC",
+) -> Dict[str, Any]:
     """
-    Pure quantitative model holding exact DeFi smart contract metrics.
-    Zero static or hardcoded approximations.
+    Evaluates 5 comprehensive DeFi rescue strategies under market shock:
+    1. do_nothing (passive observation under crash)
+    2. repay_debt (de-leveraging via external capital)
+    3. add_collateral (buffer deposit via external capital)
+    4. collateral_swap (zero external cash, freezes volatility, boosts LT to 0.90)
+    5. partial_deleverage (self-rescue via collateral auto-liquidation, restores HF to target_hf)
     """
-    # Base Inputs
-    collateral_amount: float
-    collateral_price_usd: float
-    debt_usd: float
-    liquidation_threshold: float
-    collateral_symbol: str
-    debt_symbol: str
-    price_shock_pct: float
-    target_hf: float
+    # 1. Base Valuation
+    c_0 = collateral_amount * collateral_price_usd
+    hf_0 = (c_0 * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
+    denom = collateral_amount * liquidation_threshold
+    p_liq = (debt_usd / denom) if denom > 0 else 0.0
+    buffer_pct = (1.0 - (1.0 / hf_0)) * 100.0 if hf_0 > 0 else 0.0
 
-    # Base Metrics (Price Shock = 0.0)
-    collateral_usd_0: float
-    health_factor_0: float
-    liquidation_price: float
-    buffer_to_liquidation_pct: float
+    # 1. Strategy: Do Nothing
+    shocked_collateral_usd = collateral_amount * collateral_price_usd * (1.0 + price_shock_pct / 100.0)
+    p_shock = collateral_price_usd * (1.0 + (price_shock_pct / 100.0))
+    hf_do_nothing = (shocked_collateral_usd * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
+    is_liquidated = bool(hf_do_nothing < 1.0)
+    do_nothing = {
+        "strategy_id": "do_nothing",
+        "name": "Do Nothing",
+        "action_type": "DO_NOTHING",
+        "hf": round(float(hf_do_nothing), 3),
+        "is_liquidated": is_liquidated,
+        "capital_required": 0.0,
+        "shocked_collateral_usd": round(float(shocked_collateral_usd), 2),
+        "debt_usd": round(float(debt_usd), 2),
+        "note": "Maintain position with zero intervention under market crash",
+    }
 
-    # Shocked Metrics
-    price_shocked: float
-    collateral_usd_shocked: float
-    health_factor_shocked: float
-    is_liquidated: bool
+    # 2. Strategy: Repay Debt
+    new_debt = max(debt_usd - rescue_budget_usd, 1.0)
+    hf_repay = (shocked_collateral_usd * liquidation_threshold) / new_debt if new_debt > 0 else 999.0
+    repay_debt = {
+        "strategy_id": "repay_debt",
+        "name": "Repay Debt",
+        "action_type": "REPAY_DEBT",
+        "hf": round(float(hf_repay), 3),
+        "capital_required": float(rescue_budget_usd),
+        "new_debt": round(float(new_debt), 2),
+        "is_liquidated": bool(hf_repay < 1.0),
+        "note": f"De-leverage with ${rescue_budget_usd:,.2f} external cash",
+    }
 
-    # Dynamic Debt Rescue (Target HF = 1.10)
-    safe_debt_limit: float
-    repay_needed_usd: float
+    # 3. Strategy: Add Collateral
+    new_collateral_usd = shocked_collateral_usd + rescue_budget_usd
+    hf_add = (new_collateral_usd * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
+    add_collateral = {
+        "strategy_id": "add_collateral",
+        "name": "Add Collateral",
+        "action_type": "ADD_COLLATERAL",
+        "hf": round(float(hf_add), 3),
+        "capital_required": float(rescue_budget_usd),
+        "new_collateral_usd": round(float(new_collateral_usd), 2),
+        "is_liquidated": bool(hf_add < 1.0),
+        "note": f"Deposit fresh collateral buffer of ${rescue_budget_usd:,.2f}",
+    }
 
-    # Dynamic Collateral Addition (Target HF = 1.10)
-    target_collateral_usd: float
-    add_collateral_usd: float
-    add_collateral_tokens: float
+    # 4. Strategy: Collateral Swap (Zero external capital)
+    hf_swap = (shocked_collateral_usd * stable_lt) / debt_usd if debt_usd > 0 else 999.0
+    collateral_swap = {
+        "strategy_id": "collateral_swap",
+        "name": "Collateral Swap",
+        "action_type": "COLLATERAL_SWAP",
+        "hf": round(float(hf_swap), 3),
+        "capital_required": 0.0,
+        "stable_lt": stable_lt,
+        "is_liquidated": bool(hf_swap < 1.0),
+        "note": "Freezes downward volatility and raises LT from 82.5% to 90%",
+    }
 
-    # Standard Budget Simulation ($750 USD)
-    hf_after_750_repay: float
-    hf_after_750_add: float
+    # 5. Strategy: Partial Deleverage (Self-rescue via collateral liquidation)
+    denom_del = target_hf - liquidation_threshold
+    delta_sold = (target_hf * debt_usd - shocked_collateral_usd * liquidation_threshold) / denom_del if denom_del > 0 else 0.0
+    delta_sold = max(0.0, min(delta_sold, shocked_collateral_usd))
+    rem_debt = max(1.0, debt_usd - delta_sold)
+    rem_col = max(0.0, shocked_collateral_usd - delta_sold)
+    hf_deleverage = (rem_col * liquidation_threshold) / rem_debt if rem_debt > 0 else 999.0
+    partial_deleverage = {
+        "strategy_id": "partial_deleverage",
+        "name": "Partial Deleverage",
+        "action_type": "PARTIAL_DELEVERAGE",
+        "hf": round(float(hf_deleverage), 3),
+        "collateral_sold_usd": round(float(delta_sold), 2),
+        "capital_required": 0.0,
+        "rem_debt": round(float(rem_debt), 2),
+        "rem_col": round(float(rem_col), 2),
+        "is_liquidated": bool(hf_deleverage < 1.0),
+        "note": f"Sells exact collateral needed to restore HF to {target_hf:.2f} with zero outside capital",
+    }
+
+    # Additional Rescue Helper Metrics (Target HF = 1.10)
+    safe_debt_limit = (shocked_collateral_usd * liquidation_threshold) / target_hf if target_hf > 0 else 0.0
+    repay_needed_usd = max(0.0, debt_usd - safe_debt_limit)
+    target_collateral_usd = (target_hf * debt_usd) / liquidation_threshold if liquidation_threshold > 0 else 0.0
+    add_collateral_usd = max(0.0, target_collateral_usd - shocked_collateral_usd)
+    add_collateral_tokens = (add_collateral_usd / p_shock) if p_shock > 0 else 0.0
+
+    return {
+        "collateral_amount": collateral_amount,
+        "collateral_price_usd": collateral_price_usd,
+        "debt_usd": debt_usd,
+        "liquidation_threshold": liquidation_threshold,
+        "price_shock_pct": price_shock_pct,
+        "rescue_budget_usd": rescue_budget_usd,
+        "stable_lt": stable_lt,
+        "target_hf": target_hf,
+        "collateral_symbol": collateral_symbol,
+        "debt_symbol": debt_symbol,
+        "c_0": c_0,
+        "hf_0": hf_0,
+        "p_liq": p_liq,
+        "buffer_pct": buffer_pct,
+        "p_shock": p_shock,
+        "shocked_collateral_usd": shocked_collateral_usd,
+        "is_liquidated": is_liquidated,
+        "safe_debt_limit": safe_debt_limit,
+        "repay_needed_usd": repay_needed_usd,
+        "target_collateral_usd": target_collateral_usd,
+        "add_collateral_usd": add_collateral_usd,
+        "add_collateral_tokens": add_collateral_tokens,
+        "do_nothing": do_nothing,
+        "repay_debt": repay_debt,
+        "add_collateral": add_collateral,
+        "collateral_swap": collateral_swap,
+        "partial_deleverage": partial_deleverage,
+    }
 
 
 def compute_quantitative_risk(
@@ -128,80 +229,18 @@ def compute_quantitative_risk(
     collateral_symbol: str = "ETH",
     debt_symbol: str = "USDC",
     sample_budget_usd: float = 750.0,
-) -> QuantitativeRiskMetrics:
-    """
-    Evaluates exact DeFi smart contract math formulas:
-    - C_0 = collateral_amount * collateral_price_usd
-    - HF_0 = (C_0 * liquidation_threshold) / debt_usd
-    - P_liq = debt_usd / (collateral_amount * liquidation_threshold)
-    - Buffer_pct = (1.0 - (1.0 / HF_0)) * 100
-    - P_shock = collateral_price_usd * (1.0 + (price_shock_pct / 100.0))
-    - C_shock = collateral_amount * P_shock
-    - HF_shock = (C_shock * liquidation_threshold) / debt_usd
-    - is_liquidated = HF_shock < 1.0
-    - safe_debt_limit = (C_shock * liquidation_threshold) / target_hf
-    - repay_needed = max(0.0, debt_usd - safe_debt_limit)
-    - target_collateral_usd = (target_hf * debt_usd) / liquidation_threshold
-    - add_collateral_usd = max(0.0, target_collateral_usd - C_shock)
-    - add_collateral_tokens = add_collateral_usd / P_shock
-    """
-    # 1. Base Valuation
-    c_0 = collateral_amount * collateral_price_usd
-    hf_0 = (c_0 * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
-
-    # Exact Liquidation Price (Price where HF = 1.0)
-    denom = collateral_amount * liquidation_threshold
-    p_liq = (debt_usd / denom) if denom > 0 else 0.0
-
-    # Maximum Market Drop Buffer (%)
-    buffer_pct = (1.0 - (1.0 / hf_0)) * 100.0 if hf_0 > 0 else 0.0
-
-    # 2. Shock Valuation
-    p_shock = collateral_price_usd * (1.0 + (price_shock_pct / 100.0))
-    c_shock = collateral_amount * p_shock
-    hf_shock = (c_shock * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
-    is_liquidated = hf_shock < 1.0
-
-    # 3. Dynamic Debt Rescue Math (Target HF = 1.10)
-    safe_debt_limit = (c_shock * liquidation_threshold) / target_hf if target_hf > 0 else 0.0
-    repay_needed = max(0.0, debt_usd - safe_debt_limit)
-
-    # 4. Dynamic Collateral Addition Math (Target HF = 1.10)
-    target_collateral_usd = (target_hf * debt_usd) / liquidation_threshold if liquidation_threshold > 0 else 0.0
-    add_collateral_usd = max(0.0, target_collateral_usd - c_shock)
-    add_collateral_tokens = (add_collateral_usd / p_shock) if p_shock > 0 else 0.0
-
-    # 5. Fixed Budget Scenarios ($750 USD)
-    effective_debt_after_750 = max(0.0, debt_usd - sample_budget_usd)
-    hf_after_750_repay = (c_shock * liquidation_threshold) / effective_debt_after_750 if effective_debt_after_750 > 0 else 999.0
-
-    effective_collat_after_750 = c_shock + sample_budget_usd
-    hf_after_750_add = (effective_collat_after_750 * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
-
-    return QuantitativeRiskMetrics(
+) -> Dict[str, Any]:
+    """Compatibility wrapper calling calculate_defi_risk."""
+    return calculate_defi_risk(
         collateral_amount=collateral_amount,
         collateral_price_usd=collateral_price_usd,
         debt_usd=debt_usd,
         liquidation_threshold=liquidation_threshold,
+        price_shock_pct=price_shock_pct,
+        rescue_budget_usd=sample_budget_usd,
+        target_hf=target_hf,
         collateral_symbol=collateral_symbol,
         debt_symbol=debt_symbol,
-        price_shock_pct=price_shock_pct,
-        target_hf=target_hf,
-        collateral_usd_0=c_0,
-        health_factor_0=hf_0,
-        liquidation_price=p_liq,
-        buffer_to_liquidation_pct=buffer_pct,
-        price_shocked=p_shock,
-        collateral_usd_shocked=c_shock,
-        health_factor_shocked=hf_shock,
-        is_liquidated=is_liquidated,
-        safe_debt_limit=safe_debt_limit,
-        repay_needed_usd=repay_needed,
-        target_collateral_usd=target_collateral_usd,
-        add_collateral_usd=add_collateral_usd,
-        add_collateral_tokens=add_collateral_tokens,
-        hf_after_750_repay=hf_after_750_repay,
-        hf_after_750_add=hf_after_750_add,
     )
 
 
@@ -285,96 +324,121 @@ def parse_user_query(text: str) -> Dict[str, Any]:
 # Report Generators (Markdown)
 # ---------------------------------------------------------------------------
 
-def format_crash_simulation_response(m: QuantitativeRiskMetrics) -> str:
+def format_crash_simulation_response(d: Dict[str, Any]) -> str:
     """
-    Renders pure dynamic crash stress test output matching protocol metrics.
+    Renders pure dynamic crash stress test output with 5 evaluated defense strategies:
+    1. Do Nothing
+    2. Repay Debt ($750)
+    3. Add Collateral ($750)
+    4. Collateral Swap (ETH -> USDC, $0 Needed)
+    5. Partial Deleverage (Sell $X Collateral, $0 Needed)
     """
-    risk_badge = "⚠️ (Liquidation Risk)" if m.is_liquidated else "✅ (Solvent)"
-    shock_display = abs(m.price_shock_pct)
+    shock_display = abs(d["price_shock_pct"])
+    do_nothing = d["do_nothing"]
+    repay = d["repay_debt"]
+    add = d["add_collateral"]
+    swap = d["collateral_swap"]
+    del_strat = d["partial_deleverage"]
+
+    risk_badge = "⚠️ (Liquidation Risk)" if do_nothing["is_liquidated"] else "✅ (Solvent)"
+    status_dn = "🚨 Liquidated" if do_nothing["is_liquidated"] else "⚠️ At Risk"
+    swap_badge = "✅" if not swap["is_liquidated"] else "⚠️"
 
     return (
         f"🚨 *Crash Simulation Result (-{shock_display:.0f}% Shock)*\n\n"
         f"• *Position:* Aave V3 (Arbitrum)\n"
-        f"• *Collateral:* {m.collateral_amount:.1f} {m.collateral_symbol} (${m.collateral_usd_0:,.0f} → ${m.collateral_usd_shocked:,.0f})\n"
-        f"• *Current Debt:* ${m.debt_usd:,.0f} {m.debt_symbol}\n"
-        f"• *Projected Health Factor:* *{m.health_factor_shocked:.2f}* {risk_badge}\n\n"
-        f"🛡️ *Recommended Rescue Actions:*\n"
-        f"1. *Repay Debt:* Repay $750 {m.debt_symbol} → HF restores to *{m.hf_after_750_repay:.2f}* ✅\n"
-        f"2. *Add Collateral:* Deposit $750 collateral → HF restores to *{m.hf_after_750_add:.2f}* ✅\n\n"
+        f"• *Collateral:* {d['collateral_amount']:.1f} {d['collateral_symbol']} (${d['c_0']:,.0f} → ${d['shocked_collateral_usd']:,.0f})\n"
+        f"• *Current Debt:* ${d['debt_usd']:,.0f} {d['debt_symbol']}\n"
+        f"• *Projected Health Factor:* *{do_nothing['hf']:.2f}* {risk_badge}\n\n"
+        f"🛡️ *5 Evaluated Defense Strategies:*\n"
+        f"1. *Do Nothing:* HF *{do_nothing['hf']:.2f}* {status_dn}\n"
+        f"2. *Repay Debt (${d['rescue_budget_usd']:,.0f}):* HF restores to *{repay['hf']:.2f}* ✅\n"
+        f"3. *Add Collateral (${d['rescue_budget_usd']:,.0f}):* HF restores to *{add['hf']:.2f}* ✅\n"
+        f"4. *Collateral Swap ({d['collateral_symbol']} → USDC, $0 Needed):* HF restores to *{swap['hf']:.2f}* {swap_badge}\n"
+        f"5. *Partial Deleverage (Sell ${del_strat['collateral_sold_usd']:,.0f} Collateral, $0 Needed):* HF restores to *{del_strat['hf']:.2f}* ✅ Safe\n\n"
         f"{DISCLAIMER_TEXT}"
     )
 
 
-def format_status_response(m: QuantitativeRiskMetrics) -> str:
+def format_status_response(d: Dict[str, Any]) -> str:
     """
     Renders live position status, exact liquidation price, and market drop buffer.
     """
-    status_badge = "✅ (Stable)" if m.health_factor_0 >= 1.25 else "⚠️ (Caution)"
+    status_badge = "✅ (Stable)" if d["hf_0"] >= 1.25 else "⚠️ (Caution)"
 
     # Compute quick deterministic sensitivity projections
-    m_15 = compute_quantitative_risk(
-        collateral_amount=m.collateral_amount,
-        collateral_price_usd=m.collateral_price_usd,
-        debt_usd=m.debt_usd,
-        liquidation_threshold=m.liquidation_threshold,
+    m_15 = calculate_defi_risk(
+        collateral_amount=d["collateral_amount"],
+        collateral_price_usd=d["collateral_price_usd"],
+        debt_usd=d["debt_usd"],
+        liquidation_threshold=d["liquidation_threshold"],
         price_shock_pct=-15.0,
+        collateral_symbol=d["collateral_symbol"],
+        debt_symbol=d["debt_symbol"],
     )
-    m_25 = compute_quantitative_risk(
-        collateral_amount=m.collateral_amount,
-        collateral_price_usd=m.collateral_price_usd,
-        debt_usd=m.debt_usd,
-        liquidation_threshold=m.liquidation_threshold,
+    m_25 = calculate_defi_risk(
+        collateral_amount=d["collateral_amount"],
+        collateral_price_usd=d["collateral_price_usd"],
+        debt_usd=d["debt_usd"],
+        liquidation_threshold=d["liquidation_threshold"],
         price_shock_pct=-25.0,
+        collateral_symbol=d["collateral_symbol"],
+        debt_symbol=d["debt_symbol"],
     )
-    m_35 = compute_quantitative_risk(
-        collateral_amount=m.collateral_amount,
-        collateral_price_usd=m.collateral_price_usd,
-        debt_usd=m.debt_usd,
-        liquidation_threshold=m.liquidation_threshold,
+    m_35 = calculate_defi_risk(
+        collateral_amount=d["collateral_amount"],
+        collateral_price_usd=d["collateral_price_usd"],
+        debt_usd=d["debt_usd"],
+        liquidation_threshold=d["liquidation_threshold"],
         price_shock_pct=-35.0,
+        collateral_symbol=d["collateral_symbol"],
+        debt_symbol=d["debt_symbol"],
     )
 
     return (
         f"📊 *Live Position Health & Liquidation Boundaries*\n\n"
         f"• *Protocol:* Aave V3 (Arbitrum)\n"
-        f"• *Collateral:* {m.collateral_amount:.2f} {m.collateral_symbol} (${m.collateral_usd_0:,.2f} @ ${m.collateral_price_usd:,.2f})\n"
-        f"• *Current Debt:* ${m.debt_usd:,.2f} {m.debt_symbol}\n"
-        f"• *Liquidation Threshold:* {m.liquidation_threshold * 100:.1f}%\n"
-        f"• *Current Health Factor:* *{m.health_factor_0:.2f}* {status_badge}\n"
-        f"• *Exact Liquidation Price:* *${m.liquidation_price:,.2f}*\n"
-        f"• *Market Drop Buffer:* *{m.buffer_to_liquidation_pct:.1f}%* (Max crash room before liquidation)\n\n"
+        f"• *Collateral:* {d['collateral_amount']:.2f} {d['collateral_symbol']} (${d['c_0']:,.2f} @ ${d['collateral_price_usd']:,.2f})\n"
+        f"• *Current Debt:* ${d['debt_usd']:,.2f} {d['debt_symbol']}\n"
+        f"• *Liquidation Threshold:* {d['liquidation_threshold'] * 100:.1f}%\n"
+        f"• *Current Health Factor:* *{d['hf_0']:.2f}* {status_badge}\n"
+        f"• *Exact Liquidation Price:* *${d['p_liq']:,.2f}*\n"
+        f"• *Market Drop Buffer:* *{d['buffer_pct']:.1f}%* (Max crash room before liquidation)\n\n"
         f"💡 *Deterministic Stress Sensitivity:*\n"
-        f"• -15% Shock (${m_15.price_shocked:,.2f}): Projected HF = *{m_15.health_factor_shocked:.2f}* ✅\n"
-        f"• -25% Shock (${m_25.price_shocked:,.2f}): Projected HF = *{m_25.health_factor_shocked:.2f}* ⚠️\n"
-        f"• -35% Shock (${m_35.price_shocked:,.2f}): Projected HF = *{m_35.health_factor_shocked:.2f}* 🚨\n\n"
+        f"• -15% Shock (${m_15['p_shock']:,.2f}): Projected HF = *{m_15['do_nothing']['hf']:.2f}* ✅\n"
+        f"• -25% Shock (${m_25['p_shock']:,.2f}): Projected HF = *{m_25['do_nothing']['hf']:.2f}* ⚠️\n"
+        f"• -35% Shock (${m_35['p_shock']:,.2f}): Projected HF = *{m_35['do_nothing']['hf']:.2f}* 🚨\n\n"
         f"_Ask `Simulate 35% ETH crash` or `How much debt should I repay?`_\n\n"
         f"{DISCLAIMER_TEXT}"
     )
 
 
-def format_repay_rescue_response(m: QuantitativeRiskMetrics) -> str:
+def format_repay_rescue_response(d: Dict[str, Any]) -> str:
     """
     Renders exact mathematical repayment and collateral addition requirements.
     """
-    risk_badge = "⚠️ (Liquidation Risk)" if m.is_liquidated else "✅ (Solvent)"
-    shock_display = abs(m.price_shock_pct)
+    risk_badge = "⚠️ (Liquidation Risk)" if d["do_nothing"]["is_liquidated"] else "✅ (Solvent)"
+    shock_display = abs(d["price_shock_pct"])
 
     return (
         f"🛡️ *Dynamic Debt & Rescue Analysis (-{shock_display:.0f}% Shock)*\n\n"
-        f"• *Position:* {m.collateral_amount:.2f} {m.collateral_symbol} | ${m.debt_usd:,.2f} {m.debt_symbol}\n"
-        f"• *Shocked Asset Price:* ${m.price_shocked:,.2f} / {m.collateral_symbol}\n"
-        f"• *Projected Health Factor:* *{m.health_factor_shocked:.2f}* {risk_badge}\n"
-        f"• *Target Health Factor:* *{m.target_hf:.2f}*\n\n"
+        f"• *Position:* {d['collateral_amount']:.2f} {d['collateral_symbol']} | ${d['debt_usd']:,.2f} {d['debt_symbol']}\n"
+        f"• *Shocked Asset Price:* ${d['p_shock']:,.2f} / {d['collateral_symbol']}\n"
+        f"• *Projected Health Factor:* *{d['do_nothing']['hf']:.2f}* {risk_badge}\n"
+        f"• *Target Health Factor:* *{d['target_hf']:.2f}*\n\n"
         f"⚖️ *Exact Required Adjustments:*\n"
-        f"1. *Full Safety Debt Repayment (Target HF = {m.target_hf:.2f}):*\n"
-        f"   • Repay: *${m.repay_needed_usd:,.2f}* {m.debt_symbol}\n"
-        f"   • Remaining Debt: ${m.safe_debt_limit:,.2f} {m.debt_symbol}\n"
-        f"   • Restores Health Factor to *{m.target_hf:.2f}* ✅\n\n"
-        f"2. *Fixed Budget Rescue ($750.00):*\n"
-        f"   • Repaying $750.00 {m.debt_symbol} restores HF to *{m.hf_after_750_repay:.2f}* ✅\n\n"
+        f"1. *Full Safety Debt Repayment (Target HF = {d['target_hf']:.2f}):*\n"
+        f"   • Repay: *${d['repay_needed_usd']:,.2f}* {d['debt_symbol']}\n"
+        f"   • Remaining Debt: ${d['safe_debt_limit']:,.2f} {d['debt_symbol']}\n"
+        f"   • Restores Health Factor to *{d['target_hf']:.2f}* ✅\n\n"
+        f"2. *Fixed Budget Rescue (${d['rescue_budget_usd']:,.2f}):*\n"
+        f"   • Repaying ${d['rescue_budget_usd']:,.2f} {d['debt_symbol']} restores HF to *{d['repay_debt']['hf']:.2f}* ✅\n\n"
         f"3. *Collateral Buffer Alternative:*\n"
-        f"   • Add *${m.add_collateral_usd:,.2f}* USD collateral (*{m.add_collateral_tokens:.4f} {m.collateral_symbol}*)\n"
-        f"   • Restores Health Factor to *{m.target_hf:.2f}* ✅\n\n"
+        f"   • Add *${d['add_collateral_usd']:,.2f}* USD collateral (*{d['add_collateral_tokens']:.4f} {d['collateral_symbol']}*)\n"
+        f"   • Restores Health Factor to *{d['target_hf']:.2f}* ✅\n\n"
+        f"4. *Zero External Capital Alternatives:*\n"
+        f"   • *Collateral Swap:* Swap to stablecoin (LT=90%) restores HF to *{d['collateral_swap']['hf']:.2f}*\n"
+        f"   • *Partial Deleverage:* Auto-sell ${d['partial_deleverage']['collateral_sold_usd']:,.2f} collateral restores HF to *{d['partial_deleverage']['hf']:.2f}* Safe\n\n"
         f"{DISCLAIMER_TEXT}"
     )
 

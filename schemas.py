@@ -244,6 +244,8 @@ class SimulationRequest(BaseModel):
     liquidation_threshold: Optional[float] = None
     price_shock_pct: Optional[float] = None
     rescue_budget_usd: Optional[float] = None
+    stable_lt: Optional[float] = Field(default=0.90, description="Liquidation threshold for swapped stable collateral")
+    target_hf: Optional[float] = Field(default=1.10, description="Target health factor for rescue calculations")
 
     @field_validator("custom_shocks")
     @classmethod
@@ -256,7 +258,13 @@ class SimulationRequest(BaseModel):
 
 
 class ScenarioOutcome(BaseModel):
-    action_type: Literal["DO_NOTHING", "REPAY_DEBT", "ADD_COLLATERAL"]
+    action_type: Literal[
+        "DO_NOTHING",
+        "REPAY_DEBT",
+        "ADD_COLLATERAL",
+        "COLLATERAL_SWAP",
+        "PARTIAL_DELEVERAGE",
+    ]
     action_description: str
     simulated_health_factor: float
     simulated_ltv_pct: float
@@ -281,6 +289,9 @@ class ShockStepResult(BaseModel):
     do_nothing: ScenarioOutcome
     repay_debt_scenarios: List[ScenarioOutcome]
     add_collateral_scenarios: List[ScenarioOutcome]
+    collateral_swap: Optional[ScenarioOutcome] = None
+    partial_deleverage: Optional[ScenarioOutcome] = None
+    five_strategies: Optional[Dict[str, Any]] = None
 
 
 class SimulationResponse(BaseModel):
@@ -294,6 +305,7 @@ class SimulationResponse(BaseModel):
     assumptions: List[str]
     base_metrics: Dict[str, Any]
     results: List[ShockStepResult]
+    strategies: Optional[Dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------

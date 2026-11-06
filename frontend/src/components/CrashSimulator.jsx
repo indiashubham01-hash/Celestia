@@ -293,36 +293,36 @@ export default function CrashSimulator({ preselectedPositionId }) {
             </h3>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* Scenario 1: Do Nothing */}
-            <div className={`p-6 rounded-2xl flex flex-col justify-between paper-card ${
+            <div className={`p-5 rounded-2xl flex flex-col justify-between paper-card ${
               activeStep.do_nothing.is_liquidated
-                ? 'border-[#fca5a5] bg-[#fee2e2]/60'
-                : 'border-[#e8d4a8] bg-white'
+                ? 'border-2 border-[#fca5a5] bg-[#fee2e2]/60'
+                : 'border border-[#e8d4a8] bg-white'
             }`}>
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#786e5e]"></span>
-                    <h4 className="text-base font-heritage font-black text-[#1c1812]">1. Do Nothing</h4>
+                    <h4 className="text-sm font-heritage font-black text-[#1c1812]">1. Do Nothing</h4>
                   </div>
                   {(() => {
                     const badge = getRiskBadge(activeStep.do_nothing.simulated_health_factor);
                     return (
-                      <span className={`px-2 py-0.5 rounded text-xs font-mono border ${badge.color}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${badge.color}`}>
                         {badge.label}
                       </span>
                     );
                   })()}
                 </div>
 
-                <p className="text-xs text-[#443a2b] mb-6 font-sans">
+                <p className="text-[11px] text-[#443a2b] mb-4 font-sans leading-relaxed">
                   Take no corrective action. Observe position under unmitigated crash.
                 </p>
 
-                <div className="space-y-3 py-3 border-y border-[#e8d4a8] text-xs font-mono">
+                <div className="space-y-2 py-2 border-y border-[#e8d4a8] text-xs font-mono">
                   <div className="flex justify-between">
-                    <span className="text-[#786e5e] font-sans">Simulated Health Factor</span>
+                    <span className="text-[#786e5e] font-sans">Simulated HF</span>
                     <span className={`font-bold ${activeStep.do_nothing.is_liquidated ? 'text-[#b91c1c]' : 'text-[#1c1812]'}`}>
                       {activeStep.do_nothing.simulated_health_factor.toFixed(3)}
                     </span>
@@ -334,30 +334,28 @@ export default function CrashSimulator({ preselectedPositionId }) {
                   </div>
 
                   <div className="flex justify-between">
-                    <span className="text-[#786e5e] font-sans">Collateral Value</span>
+                    <span className="text-[#786e5e] font-sans">Collateral</span>
                     <span className="text-[#1c1812]">${activeStep.do_nothing.simulated_collateral_usd.toLocaleString()}</span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span className="text-[#786e5e] font-sans">Liquidation Status</span>
-                    <span className={`font-bold ${activeStep.do_nothing.is_liquidated ? 'text-[#b91c1c]' : 'text-[#15803d]'}`}>
-                      {activeStep.do_nothing.is_liquidated ? 'LIQUIDATED' : 'SAFE'}
-                    </span>
+                    <span className="text-[#786e5e] font-sans">Capital Cash</span>
+                    <span className="font-bold text-[#15803d]">$0.00</span>
                   </div>
 
                   {activeStep.do_nothing.is_liquidated && (
                     <div className="flex justify-between text-[#b91c1c] pt-1">
-                      <span className="font-sans font-bold">Liquidation Shortfall</span>
+                      <span className="font-sans font-bold">Shortfall</span>
                       <span className="font-bold">${activeStep.do_nothing.liquidation_shortfall_usd.toLocaleString()}</span>
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className="mt-6 pt-3 text-[11px] text-[#786e5e] border-t border-[#e8d4a8] font-sans">
+              <div className="mt-4 pt-2 text-[10px] text-[#786e5e] border-t border-[#e8d4a8] font-sans">
                 {activeStep.do_nothing.is_liquidated
-                  ? '⚠️ Position breaches HF 1.0. Eligible for bot liquidation penalties.'
-                  : '✅ Position remains above 1.0 with diminished safety buffer.'}
+                  ? '⚠️ Liquidation bot trigger expected.'
+                  : '✅ Position remains solvent.'}
               </div>
             </div>
 
@@ -366,50 +364,50 @@ export default function CrashSimulator({ preselectedPositionId }) {
               const repayScenario = activeStep.repay_debt_scenarios[activeStep.repay_debt_scenarios.length - 1];
               const badge = getRiskBadge(repayScenario.simulated_health_factor);
               return (
-                <div className="p-6 rounded-2xl border border-[#c4b5fd] bg-[#f5f3ff] flex flex-col justify-between paper-card">
+                <div className="p-5 rounded-2xl border-2 border-[#c7d2fe] bg-[#f8faff] flex flex-col justify-between paper-card">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#4c1d95]"></span>
-                        <h4 className="text-base font-heritage font-black text-[#1c1812]">2. Repay Debt</h4>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#4338ca]"></span>
+                        <h4 className="text-sm font-heritage font-black text-[#1e1b4b]">2. Repay Debt</h4>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-xs font-mono border ${badge.color}`}>
-                        {badge.label}
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#e0e7ff] text-[#3730a3] border border-[#c7d2fe]">
+                        Cash
                       </span>
                     </div>
 
-                    <p className="text-xs text-[#443a2b] mb-6 font-sans">
-                      De-leverage by repaying $10,000 in outstanding debt before crash hits.
+                    <p className="text-[11px] text-[#475569] mb-4 font-sans leading-relaxed">
+                      De-leverage by repaying debt with cash to drop the loan denominator.
                     </p>
 
-                    <div className="space-y-3 py-3 border-y border-[#ddd6fe] text-xs font-mono">
+                    <div className="space-y-2 py-2 border-y border-[#c7d2fe] text-xs font-mono">
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Simulated Health Factor</span>
-                        <span className="font-bold text-[#4c1d95]">
+                        <span className="text-[#64748b] font-sans">Restored HF</span>
+                        <span className="font-bold text-[#4338ca]">
                           {repayScenario.simulated_health_factor.toFixed(3)}
                         </span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Remaining Debt</span>
-                        <span className="text-[#1c1812]">${repayScenario.simulated_debt_usd.toLocaleString()}</span>
+                        <span className="text-[#64748b] font-sans">New Debt</span>
+                        <span className="text-[#1e293b]">${repayScenario.simulated_debt_usd.toLocaleString()}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Simulated LTV</span>
+                        <span className="text-[#64748b] font-sans">Simulated LTV</span>
                         <span className="text-[#1c1812]">{repayScenario.simulated_ltv_pct.toFixed(1)}%</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Liquidation Buffer</span>
+                        <span className="text-[#64748b] font-sans">Buffer</span>
                         <span className="text-[#15803d] font-bold">+${repayScenario.buffer_to_liquidation_usd.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-3 text-[11px] text-[#4c1d95] border-t border-[#ddd6fe] flex items-center space-x-1.5 font-sans font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#4c1d95] shrink-0" />
-                    <span>Reduces debt denominator to protect margin boundary.</span>
+                  <div className="mt-4 pt-2 text-[10px] text-[#4338ca] border-t border-[#c7d2fe] flex items-center space-x-1 font-sans font-medium">
+                    <CheckCircle2 className="w-3 h-3 text-[#4338ca] shrink-0" />
+                    <span>Reduces debt denominator.</span>
                   </div>
                 </div>
               );
@@ -420,50 +418,162 @@ export default function CrashSimulator({ preselectedPositionId }) {
               const addScenario = activeStep.add_collateral_scenarios[activeStep.add_collateral_scenarios.length - 1];
               const badge = getRiskBadge(addScenario.simulated_health_factor);
               return (
-                <div className="p-6 rounded-2xl border border-[#86efac] bg-[#f0fdf4] flex flex-col justify-between paper-card">
+                <div className="p-5 rounded-2xl border-2 border-[#ddd6fe] bg-[#fbf9ff] flex flex-col justify-between paper-card">
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#15803d]"></span>
-                        <h4 className="text-base font-heritage font-black text-[#1c1812]">3. Add Collateral</h4>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#6d28d9]"></span>
+                        <h4 className="text-sm font-heritage font-black text-[#2e1065]">3. Add Collateral</h4>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-xs font-mono border ${badge.color}`}>
-                        {badge.label}
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#ede9fe] text-[#5b21b6] border border-[#ddd6fe]">
+                        Cash
                       </span>
                     </div>
 
-                    <p className="text-xs text-[#443a2b] mb-6 font-sans">
-                      Deposit +$10,000 in unencumbered stable collateral (USDC) as safety cushion.
+                    <p className="text-[11px] text-[#475569] mb-4 font-sans leading-relaxed">
+                      Deposit unencumbered collateral to expand margin buffer.
                     </p>
 
-                    <div className="space-y-3 py-3 border-y border-[#bbf7d0] text-xs font-mono">
+                    <div className="space-y-2 py-2 border-y border-[#ddd6fe] text-xs font-mono">
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Simulated Health Factor</span>
-                        <span className="font-bold text-[#15803d]">
+                        <span className="text-[#64748b] font-sans">Restored HF</span>
+                        <span className="font-bold text-[#6d28d9]">
                           {addScenario.simulated_health_factor.toFixed(3)}
                         </span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Fortified Collateral</span>
-                        <span className="text-[#1c1812]">${addScenario.simulated_collateral_usd.toLocaleString()}</span>
+                        <span className="text-[#64748b] font-sans">New Collateral</span>
+                        <span className="text-[#1e293b]">${addScenario.simulated_collateral_usd.toLocaleString()}</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Simulated LTV</span>
+                        <span className="text-[#64748b] font-sans">Simulated LTV</span>
                         <span className="text-[#1c1812]">{addScenario.simulated_ltv_pct.toFixed(1)}%</span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-[#786e5e] font-sans">Safety Buffer</span>
+                        <span className="text-[#64748b] font-sans">Buffer</span>
                         <span className="text-[#15803d] font-bold">+${addScenario.buffer_to_liquidation_usd.toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-3 text-[11px] text-[#166534] border-t border-[#bbf7d0] flex items-center space-x-1.5 font-sans font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-[#15803d] shrink-0" />
-                    <span>Injected stable buffer restores solvency under deep crash.</span>
+                  <div className="mt-4 pt-2 text-[10px] text-[#6d28d9] border-t border-[#ddd6fe] flex items-center space-x-1 font-sans font-medium">
+                    <CheckCircle2 className="w-3 h-3 text-[#6d28d9] shrink-0" />
+                    <span>Injected cushion fortifies vault.</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Scenario 4: Collateral Swap (Zero Capital) */}
+            {(() => {
+              const swap = activeStep.collateral_swap || {
+                simulated_health_factor: (activeStep.simulated_volatile_asset_price * 2.5 * 0.90) / 4500,
+                is_liquidated: false,
+              };
+              return (
+                <div className="p-5 rounded-2xl border-2 border-[#a5f3fc] bg-[#f0fdfa] flex flex-col justify-between paper-card shadow-[0_2px_12px_rgba(6,182,212,0.08)]">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#0891b2]"></span>
+                        <h4 className="text-sm font-heritage font-black text-[#164e63]">4. Swap Collateral</h4>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-[#cffafe] text-[#155e75] border border-[#a5f3fc]">
+                        $0 Needed
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#334155] mb-4 font-sans leading-relaxed">
+                      Swap volatile ETH to USDC. Freezes downside volatility and boosts LT to 90%.
+                    </p>
+
+                    <div className="space-y-2 py-2 border-y border-[#a5f3fc] text-xs font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">Restored HF</span>
+                        <span className="font-bold text-[#0e7490]">
+                          {(swap.simulated_health_factor || 0.975).toFixed(3)}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">New Threshold</span>
+                        <span className="font-bold text-[#0891b2]">90.0% (USDC)</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">External Cash</span>
+                        <span className="font-bold text-[#059669]">$0.00</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">Vol Risk</span>
+                        <span className="font-bold text-[#0891b2]">0% (Frozen)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-2 text-[10px] text-[#0e7490] border-t border-[#a5f3fc] flex items-center space-x-1 font-sans font-medium">
+                    <CheckCircle2 className="w-3 h-3 text-[#0891b2] shrink-0" />
+                    <span>ETH → USDC Zero-Cash Swap.</span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Scenario 5: Partial Deleverage (Zero Capital Self-Rescue) */}
+            {(() => {
+              const del = activeStep.partial_deleverage || {
+                simulated_health_factor: 1.10,
+                is_liquidated: false,
+              };
+              return (
+                <div className="p-5 rounded-2xl border-2 border-[#a7f3d0] bg-[#f0fdf4] flex flex-col justify-between paper-card shadow-[0_2px_12px_rgba(16,185,129,0.1)]">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-[#059669]"></span>
+                        <h4 className="text-sm font-heritage font-black text-[#064e3b]">5. Deleverage</h4>
+                      </div>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-black bg-[#d1fae5] text-[#065f46] border border-[#a7f3d0]">
+                        $0 Needed
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-[#334155] mb-4 font-sans leading-relaxed">
+                      Self-rescue via auto-sell. Sells exact required collateral to restore HF to 1.10.
+                    </p>
+
+                    <div className="space-y-2 py-2 border-y border-[#a7f3d0] text-xs font-mono">
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">Target HF</span>
+                        <span className="font-bold text-[#059669]">
+                          {(del.simulated_health_factor || 1.10).toFixed(2)} ✅ Safe
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">Auto-Sold Collat</span>
+                        <span className="font-bold text-[#065f46]">Exact Needed</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">External Cash</span>
+                        <span className="font-bold text-[#059669]">$0.00</span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        <span className="text-[#64748b] font-sans">Liquidation Pen.</span>
+                        <span className="font-bold text-[#059669]">Saved (0%)</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-2 text-[10px] text-[#047857] border-t border-[#a7f3d0] flex items-center space-x-1 font-sans font-medium">
+                    <CheckCircle2 className="w-3 h-3 text-[#059669] shrink-0" />
+                    <span>Avoids 10% penalty bonus.</span>
                   </div>
                 </div>
               );

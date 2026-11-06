@@ -7,7 +7,7 @@ Read-only monitoring and deterministic risk stress-testing for retail DeFi borro
 
 import os
 import random
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException, status, Query, Path
 from fastapi.middleware.cors import CORSMiddleware
@@ -518,6 +518,110 @@ async def get_position_detail(
     )
 
 
+def calculate_five_strategies(
+    collateral_amount: float = 2.5,
+    collateral_price_usd: float = 3000.0,
+    debt_usd: float = 4500.0,
+    liquidation_threshold: float = 0.825,
+    price_shock_pct: float = -35.0,
+    rescue_budget_usd: float = 750.0,
+    stable_lt: float = 0.90,
+    target_hf: float = 1.10,
+) -> Dict[str, Any]:
+    """
+    Evaluates 5 comprehensive DeFi rescue strategies under market shock:
+    1. do_nothing (passive)
+    2. repay_debt (de-leveraging via external capital)
+    3. add_collateral (buffer deposit via external capital)
+    4. collateral_swap (zero external cash, freezes volatility, boosts LT to 0.90)
+    5. partial_deleverage (self-rescue via collateral auto-liquidation, restores HF to target_hf)
+    """
+    # 1. Do Nothing
+    shocked_collateral_usd = collateral_amount * collateral_price_usd * (1.0 + price_shock_pct / 100.0)
+    hf_do_nothing = (shocked_collateral_usd * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
+    is_liquidated = bool(hf_do_nothing < 1.0)
+    do_nothing = {
+        "strategy_id": "do_nothing",
+        "name": "Do Nothing",
+        "action_type": "DO_NOTHING",
+        "shocked_collateral_usd": round(float(shocked_collateral_usd), 2),
+        "debt_usd": round(float(debt_usd), 2),
+        "hf": round(float(hf_do_nothing), 3),
+        "is_liquidated": is_liquidated,
+        "capital_required": 0.0,
+        "note": "Maintain position with zero intervention under market crash",
+    }
+
+    # 2. Repay Debt
+    new_debt = max(debt_usd - rescue_budget_usd, 1.0)
+    hf_repay = (shocked_collateral_usd * liquidation_threshold) / new_debt if new_debt > 0 else 999.0
+    repay_debt = {
+        "strategy_id": "repay_debt",
+        "name": "Repay Debt",
+        "action_type": "REPAY_DEBT",
+        "new_debt": round(float(new_debt), 2),
+        "hf": round(float(hf_repay), 3),
+        "capital_required": float(rescue_budget_usd),
+        "is_liquidated": bool(hf_repay < 1.0),
+        "note": f"De-leverage by repaying debt with ${rescue_budget_usd:,.2f} external cash",
+    }
+
+    # 3. Add Collateral
+    new_collateral_usd = shocked_collateral_usd + rescue_budget_usd
+    hf_add = (new_collateral_usd * liquidation_threshold) / debt_usd if debt_usd > 0 else 999.0
+    add_collateral = {
+        "strategy_id": "add_collateral",
+        "name": "Add Collateral",
+        "action_type": "ADD_COLLATERAL",
+        "new_collateral_usd": round(float(new_collateral_usd), 2),
+        "hf": round(float(hf_add), 3),
+        "capital_required": float(rescue_budget_usd),
+        "is_liquidated": bool(hf_add < 1.0),
+        "note": f"Deposit fresh collateral buffer of ${rescue_budget_usd:,.2f}",
+    }
+
+    # 4. Collateral Swap (Zero external capital)
+    hf_swap = (shocked_collateral_usd * stable_lt) / debt_usd if debt_usd > 0 else 999.0
+    collateral_swap = {
+        "strategy_id": "collateral_swap",
+        "name": "Collateral Swap",
+        "action_type": "COLLATERAL_SWAP",
+        "hf": round(float(hf_swap), 3),
+        "capital_required": 0.0,
+        "is_liquidated": bool(hf_swap < 1.0),
+        "note": "Freezes downward volatility and raises LT from 82.5% to 90%",
+    }
+
+    # 5. Partial Deleverage (Self-rescue via collateral liquidation)
+    denom = target_hf - liquidation_threshold
+    delta_sold = (target_hf * debt_usd - shocked_collateral_usd * liquidation_threshold) / denom if denom > 0 else 0.0
+    delta_sold = max(0.0, min(delta_sold, shocked_collateral_usd))
+    rem_debt = max(1.0, debt_usd - delta_sold)
+    rem_col = max(0.0, shocked_collateral_usd - delta_sold)
+    hf_deleverage = (rem_col * liquidation_threshold) / rem_debt if rem_debt > 0 else 999.0
+    partial_deleverage = {
+        "strategy_id": "partial_deleverage",
+        "name": "Partial Deleverage",
+        "action_type": "PARTIAL_DELEVERAGE",
+        "delta_sold": round(float(delta_sold), 2),
+        "rem_debt": round(float(rem_debt), 2),
+        "rem_col": round(float(rem_col), 2),
+        "hf": round(float(hf_deleverage), 3),
+        "collateral_sold_usd": round(float(delta_sold), 2),
+        "capital_required": 0.0,
+        "is_liquidated": bool(hf_deleverage < 1.0),
+        "note": f"Sells exact collateral needed to restore HF to {target_hf:.2f} with zero outside capital",
+    }
+
+    return {
+        "do_nothing": do_nothing,
+        "repay_debt": repay_debt,
+        "add_collateral": add_collateral,
+        "collateral_swap": collateral_swap,
+        "partial_deleverage": partial_deleverage,
+    }
+
+
 # ---------------------------------------------------------------------------
 # 5. Crash Simulation & Stress Testing Endpoint
 # ---------------------------------------------------------------------------
@@ -588,6 +692,18 @@ async def run_simulation(payload: SimulationRequest):
         add_collateral_amounts_usd=collats,
         spot_prices=spot_prices,
     )
+
+    if payload.collateral_amount and payload.collateral_price_usd and payload.debt_usd:
+        simulation_result.strategies = calculate_five_strategies(
+            collateral_amount=float(payload.collateral_amount or 2.5),
+            collateral_price_usd=float(payload.collateral_price_usd or 3000.0),
+            debt_usd=float(payload.debt_usd or 4500.0),
+            liquidation_threshold=float(payload.liquidation_threshold or 0.825),
+            price_shock_pct=float(payload.price_shock_pct if payload.price_shock_pct is not None else -35.0),
+            rescue_budget_usd=float(payload.rescue_budget_usd or 750.0),
+            stable_lt=float(payload.stable_lt or 0.90),
+            target_hf=float(payload.target_hf or 1.10),
+        )
 
     return simulation_result
 

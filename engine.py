@@ -316,6 +316,101 @@ def execute_stress_test_simulation(
                 )
             )
 
+        # D. Scenario 4: COLLATERAL SWAP (Zero external capital)
+        stable_lt = 0.90
+        swap_capacity = float(total_shocked_collateral * stable_lt)
+        swap_hf = swap_capacity / base_debt if base_debt > 0 else 999.0
+        swap_ltv = (base_debt / total_shocked_collateral) * 100.0 if total_shocked_collateral > 0 else 0.0
+        swap_outcome = ScenarioOutcome(
+            action_type="COLLATERAL_SWAP",
+            action_description=f"Swap volatile collateral to stablecoin with {stable_lt*100:.0f}% liquidation threshold",
+            simulated_health_factor=round(float(swap_hf), 3),
+            simulated_ltv_pct=round(float(swap_ltv), 2),
+            simulated_collateral_usd=round(float(total_shocked_collateral), 2),
+            simulated_debt_usd=round(float(base_debt), 2),
+            is_liquidated=bool(swap_hf < 1.0),
+            liquidation_shortfall_usd=round(float(max(0.0, base_debt - swap_capacity)), 2),
+            buffer_to_liquidation_usd=round(float(max(0.0, swap_capacity - base_debt)), 2),
+            risk_level=classify_risk_level(swap_hf),
+        )
+
+        # E. Scenario 5: PARTIAL DELEVERAGE (Self-rescue via collateral liquidation)
+        target_hf = 1.10
+        denom_del = target_hf - volatile_lt
+        if denom_del > 0:
+            delta_sold = (target_hf * base_debt - shocked_liq_capacity) / denom_del
+        else:
+            delta_sold = 0.0
+        delta_sold = max(0.0, min(delta_sold, total_shocked_collateral))
+        del_debt = max(1.0, base_debt - delta_sold)
+        del_collat = max(0.0, total_shocked_collateral - delta_sold)
+        del_capacity = max(0.0, shocked_liq_capacity - (delta_sold * volatile_lt))
+        del_hf = del_capacity / del_debt if del_debt > 0 else 999.0
+        del_ltv = (del_debt / del_collat) * 100.0 if del_collat > 0 else 0.0
+        deleverage_outcome = ScenarioOutcome(
+            action_type="PARTIAL_DELEVERAGE",
+            action_description=f"Auto-sell ${delta_sold:,.2f} collateral to repay debt and restore HF to {target_hf:.2f}",
+            simulated_health_factor=round(float(del_hf), 3),
+            simulated_ltv_pct=round(float(del_ltv), 2),
+            simulated_collateral_usd=round(float(del_collat), 2),
+            simulated_debt_usd=round(float(del_debt), 2),
+            is_liquidated=bool(del_hf < 1.0),
+            liquidation_shortfall_usd=round(float(max(0.0, del_debt - del_capacity)), 2),
+            buffer_to_liquidation_usd=round(float(max(0.0, del_capacity - del_debt)), 2),
+            risk_level=classify_risk_level(del_hf),
+        )
+
+        best_repay = repay_outcomes[0] if repay_outcomes else None
+        best_add = add_collat_outcomes[0] if add_collat_outcomes else None
+        five_strats = {
+            "do_nothing": {
+                "name": "Do Nothing",
+                "hf": do_nothing_outcome.simulated_health_factor,
+                "is_liquidated": do_nothing_outcome.is_liquidated,
+                "capital_required": 0.0,
+                "collateral_usd": do_nothing_outcome.simulated_collateral_usd,
+                "debt_usd": do_nothing_outcome.simulated_debt_usd,
+                "note": "Passive observation under market crash",
+            },
+            "repay_debt": {
+                "name": "Repay Debt",
+                "hf": best_repay.simulated_health_factor if best_repay else do_nothing_outcome.simulated_health_factor,
+                "is_liquidated": best_repay.is_liquidated if best_repay else False,
+                "capital_required": float(repay_steps[0]) if len(repay_steps) > 0 else 750.0,
+                "collateral_usd": best_repay.simulated_collateral_usd if best_repay else 0.0,
+                "debt_usd": best_repay.simulated_debt_usd if best_repay else 0.0,
+                "note": "De-leverage with external cash",
+            },
+            "add_collateral": {
+                "name": "Add Collateral",
+                "hf": best_add.simulated_health_factor if best_add else do_nothing_outcome.simulated_health_factor,
+                "is_liquidated": best_add.is_liquidated if best_add else False,
+                "capital_required": float(add_collat_steps[0]) if len(add_collat_steps) > 0 else 750.0,
+                "collateral_usd": best_add.simulated_collateral_usd if best_add else 0.0,
+                "debt_usd": best_add.simulated_debt_usd if best_add else 0.0,
+                "note": "Deposit fresh collateral buffer",
+            },
+            "collateral_swap": {
+                "name": "Collateral Swap",
+                "hf": swap_outcome.simulated_health_factor,
+                "is_liquidated": swap_outcome.is_liquidated,
+                "capital_required": 0.0,
+                "collateral_usd": swap_outcome.simulated_collateral_usd,
+                "debt_usd": swap_outcome.simulated_debt_usd,
+                "note": "Freezes downward volatility and raises LT from 82.5% to 90%",
+            },
+            "partial_deleverage": {
+                "name": "Partial Deleverage",
+                "hf": deleverage_outcome.simulated_health_factor,
+                "is_liquidated": deleverage_outcome.is_liquidated,
+                "capital_required": 0.0,
+                "collateral_sold_usd": round(float(delta_sold), 2),
+                "collateral_usd": deleverage_outcome.simulated_collateral_usd,
+                "debt_usd": deleverage_outcome.simulated_debt_usd,
+                "note": f"Sells exact collateral (${delta_sold:,.2f}) to restore HF to {target_hf:.2f} with zero outside capital",
+            },
+        }
+
         step_results.append(
             ShockStepResult(
                 shock_percentage=round(shock_pct, 1),
@@ -324,6 +419,9 @@ def execute_stress_test_simulation(
                 do_nothing=do_nothing_outcome,
                 repay_debt_scenarios=repay_outcomes,
                 add_collateral_scenarios=add_collat_outcomes,
+                collateral_swap=swap_outcome,
+                partial_deleverage=deleverage_outcome,
+                five_strategies=five_strats,
             )
         )
 
@@ -351,5 +449,6 @@ def execute_stress_test_simulation(
             "volatile_asset_spot_usd": base["volatile_asset_price"],
         },
         results=step_results,
+        strategies=step_results[0].five_strategies if step_results else None,
     )
 
