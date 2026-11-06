@@ -8,6 +8,7 @@ import CrashSimulator from './components/CrashSimulator';
 import AlertsPreferences from './components/AlertsPreferences';
 import WalletModal from './components/WalletModal';
 import TelegramModal from './components/TelegramModal';
+import ConsentModal from './components/ConsentModal';
 import DisclaimerBanner from './components/DisclaimerBanner';
 import { supabase } from './lib/supabase';
 import { api } from './services/api';
@@ -32,6 +33,7 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [isTelegramModalOpen, setIsTelegramModalOpen] = useState(false);
+  const [isConsentModalOpen, setIsConsentModalOpen] = useState(false);
 
   // Authenticated user & active wallet session
   const [user, setUser] = useState(null);
@@ -195,6 +197,16 @@ export default function App() {
       subscription?.unsubscribe();
     };
   }, []);
+
+  // Auto-prompt terms and liability consent modal when entering dashboard if not already accepted
+  useEffect(() => {
+    if (currentView === 'dashboard') {
+      const isConsentAccepted = localStorage.getItem('bachega_consent_accepted') === 'true';
+      if (!isConsentAccepted) {
+        setIsConsentModalOpen(true);
+      }
+    }
+  }, [currentView]);
 
   // 2. Fetch portfolio and wallets from backend API (with graceful fallback)
   const loadData = async () => {
@@ -453,6 +465,7 @@ export default function App() {
         user={user}
         primaryWallet={primaryWallet}
         onOpenTelegramModal={() => setIsTelegramModalOpen(true)}
+        onOpenConsentModal={() => setIsConsentModalOpen(true)}
       />
 
       {/* Main Screen Navigation */}
@@ -485,6 +498,7 @@ export default function App() {
                 onRefresh={loadData}
                 onSelectPositionForSimulation={handleSelectPositionForSim}
                 onOpenTelegramModal={() => setIsTelegramModalOpen(true)}
+                onOpenConsentModal={() => setIsConsentModalOpen(true)}
                 customPosition={customPosition}
                 onUpdateCustomPosition={(newPos) => {
                   setCustomPosition(newPos);
@@ -544,8 +558,18 @@ export default function App() {
         }}
       />
 
+      {/* Non-Custodial Terms, Risk Consent & Limitation of Liability Modal */}
+      <ConsentModal
+        isOpen={isConsentModalOpen}
+        onClose={() => setIsConsentModalOpen(false)}
+        currentUser={user}
+        onAccept={(data) => {
+          console.log('Terms & liability consent acknowledged:', data);
+        }}
+      />
+
       {/* Persistent Regulatory & Risk Disclaimer ("Simulation, not prediction.") */}
-      <DisclaimerBanner />
+      <DisclaimerBanner onOpenConsentModal={() => setIsConsentModalOpen(true)} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   TrendingUp,
   AlertTriangle,
   ShieldCheck,
+  ShieldAlert,
   Scale,
   RefreshCw,
   Sliders,
@@ -61,12 +62,16 @@ export default function PortfolioDashboard({
   onOpenTelegramModal,
   customPosition,
   onUpdateCustomPosition,
+  onOpenConsentModal,
 }) {
   const [telegramConnected, setTelegramConnected] = useState(
     () => localStorage.getItem('bachega_telegram_verified') === 'true'
   );
   const [telegramUsername, setTelegramUsername] = useState(
     () => localStorage.getItem('bachega_telegram_username') || ''
+  );
+  const [consentAccepted, setConsentAccepted] = useState(
+    () => localStorage.getItem('bachega_consent_accepted') === 'true'
   );
 
   // Position Configuration State
@@ -95,14 +100,15 @@ export default function PortfolioDashboard({
   }, [customPosition]);
 
   useEffect(() => {
-    const checkTelegram = () => {
+    const checkState = () => {
       setTelegramConnected(localStorage.getItem('bachega_telegram_verified') === 'true');
       setTelegramUsername(localStorage.getItem('bachega_telegram_username') || '');
+      setConsentAccepted(localStorage.getItem('bachega_consent_accepted') === 'true');
     };
-    window.addEventListener('storage', checkTelegram);
-    const interval = setInterval(checkTelegram, 2500);
+    window.addEventListener('storage', checkState);
+    const interval = setInterval(checkState, 2000);
     return () => {
-      window.removeEventListener('storage', checkTelegram);
+      window.removeEventListener('storage', checkState);
       clearInterval(interval);
     };
   }, []);
@@ -269,6 +275,59 @@ export default function PortfolioDashboard({
           </button>
         </div>
       </div>
+
+      {/* Non-Custodial Terms & Liability Consent Banner */}
+      {!consentAccepted ? (
+        <div className="p-4 rounded-2xl bg-[#fef08a] border-2 border-black shadow-[4px_4px_0_#000] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+          <div className="flex items-start space-x-3">
+            <div className="p-2 rounded-xl bg-[#dc2626] text-white border-2 border-black shadow-[2px_2px_0_#000] shrink-0 mt-0.5">
+              <ShieldAlert className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-mono font-black text-xs uppercase bg-[#fee2e2] text-[#991b1b] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
+                  ACTION REQUIRED
+                </span>
+                <strong className="text-black font-black text-sm">
+                  Risk Consent &amp; Liability Waiver Pending
+                </strong>
+              </div>
+              <p className="text-xs text-black/80 font-medium mt-1 leading-snug">
+                Please review and acknowledge our Non-Custodial Terms: All stress tests are simulations (not predictions). <strong>We are NOT responsible</strong> for any on-chain liquidations, fund losses, gas fee spikes, or market events.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenConsentModal}
+            className="btn-3d-royal shrink-0 px-4 py-2.5 rounded-xl text-xs font-mono font-black flex items-center space-x-2 w-full sm:w-auto justify-center"
+          >
+            <ShieldAlert className="w-4 h-4 text-[#fef08a]" />
+            <span>Review &amp; Accept Terms</span>
+          </button>
+        </div>
+      ) : (
+        <div className="p-3 rounded-xl bg-white border-2 border-black shadow-[3px_3px_0_#000] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs animate-in fade-in duration-200">
+          <div className="flex items-center space-x-2.5">
+            <div className="w-6 h-6 rounded-lg bg-[#86efac] border border-black flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4 text-[#166534]" />
+            </div>
+            <div className="text-black font-medium">
+              <span className="font-mono font-black uppercase text-[10px] text-[#166534] bg-[#dcfce7] px-1.5 py-0.5 rounded border border-[#16a34a] mr-2">
+                CONSENT ACTIVE
+              </span>
+              Non-Custodial Terms &amp; Zero-Liability Waiver Acknowledged (Simulation Only • No Custody • Zero Liability)
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenConsentModal}
+            className="text-black/75 hover:text-black font-mono font-bold text-[11px] underline flex items-center space-x-1 shrink-0 ml-auto sm:ml-0"
+          >
+            <span>Review Full Terms &amp; Disclaimer</span>
+          </button>
+        </div>
+      )}
 
       {/* Interactive Position Editor Bar (When Opened) */}
       {isEditingPosition && (

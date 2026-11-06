@@ -24,6 +24,7 @@ export default function Navbar({
   user,
   primaryWallet,
   onOpenTelegramModal,
+  onOpenConsentModal,
 }) {
   const [isTelegramVerified, setIsTelegramVerified] = useState(
     () => localStorage.getItem('bachega_telegram_verified') === 'true'
@@ -31,11 +32,15 @@ export default function Navbar({
   const [telegramUsername, setTelegramUsername] = useState(
     () => localStorage.getItem('bachega_telegram_username') || ''
   );
+  const [isConsentAccepted, setIsConsentAccepted] = useState(
+    () => localStorage.getItem('bachega_consent_accepted') === 'true'
+  );
 
   useEffect(() => {
     const handleStorageChange = () => {
       setIsTelegramVerified(localStorage.getItem('bachega_telegram_verified') === 'true');
       setTelegramUsername(localStorage.getItem('bachega_telegram_username') || '');
+      setIsConsentAccepted(localStorage.getItem('bachega_consent_accepted') === 'true');
     };
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(handleStorageChange, 2000);
@@ -152,6 +157,22 @@ export default function Navbar({
                 <span className="w-2 h-2 rounded-full bg-[#86efac] border border-black animate-pulse" />
               ) : (
                 <span className="w-2 h-2 rounded-full bg-[#fef08a] border border-black" />
+              )}
+            </button>
+
+            {/* Terms of Service & Risk Disclaimer Consent Button (Always accessible) */}
+            <button
+              onClick={onOpenConsentModal}
+              title="Review Terms of Service & Limitation of Liability"
+              className="bg-white hover:bg-[#fef08a] text-black border-2 border-black shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1.5 transition-all"
+            >
+              <Shield className={`w-3.5 h-3.5 ${isConsentAccepted ? 'text-[#16a34a]' : 'text-[#dc2626]'}`} />
+              <span className="hidden sm:inline">Terms &amp; Risk</span>
+              <span className="sm:hidden">Terms</span>
+              {isConsentAccepted ? (
+                <span className="w-2 h-2 rounded-full bg-[#86efac] border border-black" title="Consent Active" />
+              ) : (
+                <span className="w-2 h-2 rounded-full bg-[#dc2626] border border-black animate-pulse" title="Consent Required" />
               )}
             </button>
 

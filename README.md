@@ -32,6 +32,7 @@ Retail borrowers on decentralized lending protocols like **Aave v3**, **Compound
 2. **Deterministic Stress Engine**: Real-time evaluation of price shocks (-10% to -50%) across **5 quantitative defense strategies**.
 3. **Automated Alarm Dispatch**: Continuous Health Factor ($HF$) surveillance with multi-tier early warning push notifications delivered directly to your device via **Telegram ([@Bachegafi_bot](https://t.me/Bachegafi_bot))**.
 4. **Resilient Dual Architecture**: Seamless full-stack support with Python FastAPI backend and zero-latency client fallback mode for decoupled static web deployments (Vercel + Supabase).
+5. **Interactive Risk & Liability Consent**: Transparent Terms of Service and limitation of liability agreement explicitly acknowledging non-custodial operation, educational simulation scope, and zero operator liability for on-chain market liquidations.
 
 ---
 
