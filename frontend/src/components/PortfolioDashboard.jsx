@@ -9,8 +9,48 @@ import {
   Sliders,
   DollarSign,
   Send,
-  ExternalLink
+  ExternalLink,
+  Edit3,
+  Check,
+  Layers,
+  Sparkles
 } from 'lucide-react';
+
+const PROTOCOL_PRESETS = {
+  aave_eth: {
+    label: 'Aave V3 (ETH / USDC)',
+    collatUsd: 7500.0,
+    debtUsd: 4500.0,
+    symbol: 'ETH',
+    amount: 2.5,
+    price: 3000.0,
+    protocol: 'Aave v3',
+    chain: 'Arbitrum',
+    lt: 0.825,
+  },
+  aave_wbtc: {
+    label: 'Aave V3 (WBTC / USDT)',
+    collatUsd: 9750.0,
+    debtUsd: 7000.0,
+    symbol: 'WBTC',
+    amount: 0.15,
+    price: 65000.0,
+    protocol: 'Aave v3',
+    chain: 'Arbitrum',
+    lt: 0.780,
+  },
+  demo_fleet: {
+    label: 'Demo Fleet (3 Protocols)',
+    collatUsd: 176425.0,
+    debtUsd: 95500.0,
+    symbol: 'ETH',
+    amount: 54.28,
+    price: 3250.0,
+    protocol: 'Aave v3',
+    chain: 'Ethereum',
+    lt: 0.812,
+  },
+};
 
 export default function PortfolioDashboard({
   portfolio,
@@ -19,6 +59,8 @@ export default function PortfolioDashboard({
   onRefresh,
   onSelectPositionForSimulation,
   onOpenTelegramModal,
+  customPosition,
+  onUpdateCustomPosition,
 }) {
   const [telegramConnected, setTelegramConnected] = useState(
     () => localStorage.getItem('bachega_telegram_verified') === 'true'
@@ -26,6 +68,31 @@ export default function PortfolioDashboard({
   const [telegramUsername, setTelegramUsername] = useState(
     () => localStorage.getItem('bachega_telegram_username') || ''
   );
+
+  // Position Configuration State
+  const [isEditingPosition, setIsEditingPosition] = useState(false);
+  const [activePreset, setActivePreset] = useState('custom');
+  const [inputCollat, setInputCollat] = useState(() => {
+    return customPosition?.collateral_usd?.toString() || '7500';
+  });
+  const [inputDebt, setInputDebt] = useState(() => {
+    return customPosition?.debt_usd?.toString() || '4500';
+  });
+  const [inputLt, setInputLt] = useState(() => {
+    return customPosition?.liquidation_threshold?.toString() || '0.825';
+  });
+  const [inputSymbol, setInputSymbol] = useState(() => {
+    return customPosition?.collateral_symbol || 'ETH';
+  });
+
+  useEffect(() => {
+    if (customPosition) {
+      setInputCollat(customPosition.collateral_usd?.toString() || '7500');
+      setInputDebt(customPosition.debt_usd?.toString() || '4500');
+      setInputLt(customPosition.liquidation_threshold?.toString() || '0.825');
+      setInputSymbol(customPosition.collateral_symbol || 'ETH');
+    }
+  }, [customPosition]);
 
   useEffect(() => {
     const checkTelegram = () => {
@@ -39,6 +106,7 @@ export default function PortfolioDashboard({
       clearInterval(interval);
     };
   }, []);
+
   if (loading && !portfolio) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -69,15 +137,66 @@ export default function PortfolioDashboard({
     );
   }
 
-  const {
-    total_collateral_usd = 0,
-    total_debt_usd = 0,
-    net_worth_usd = 0,
-    aggregate_health_factor = 0,
-    lending_summaries = [],
-    wallet_assets = [],
-    price_source = 'Live CoinGecko + Alchemy'
-  } = portfolio || {};
+  // Active Metrics: Prefer customPosition if configured, otherwise fallback to portfolio
+  const effectiveCollat = customPosition?.collateral_usd !== undefined
+    ? Number(customPosition.collateral_usd)
+    : (portfolio?.total_collateral_usd || 176425.0);
+
+  const effectiveDebt = customPosition?.debt_usd !== undefined
+    ? Number(customPosition.debt_usd)
+    : (portfolio?.total_debt_usd || 95500.0);
+
+  const effectiveLt = customPosition?.liquidation_threshold !== undefined
+    ? Number(customPosition.liquidation_threshold)
+    : 0.812;
+
+  const effectiveNetWorth = effectiveCollat - effectiveDebt;
+  const effectiveHf = effectiveDebt > 0 ? (effectiveCollat * effectiveLt) / effectiveDebt : 999.0;
+  const price_source = portfolio?.price_source || 'CoinGecko API (live/cached) + Alchemy Node';
+
+  const handleApplyPreset = (key) => {
+    setActivePreset(key);
+    const p = PROTOCOL_PRESETS[key];
+    if (p && onUpdateCustomPosition) {
+      setInputCollat(p.collatUsd.toString());
+      setInputDebt(p.debtUsd.toString());
+      setInputLt(p.lt.toString());
+      setInputSymbol(p.symbol);
+      onUpdateCustomPosition({
+        collateral_usd: p.collatUsd,
+        debt_usd: p.debtUsd,
+        collateral_symbol: p.symbol,
+        collateral_amount: p.amount,
+        collateral_price: p.price,
+        protocol: p.protocol,
+        chain: p.chain,
+        liquidation_threshold: p.lt,
+      });
+    }
+  };
+
+  const handleSaveCustomMetrics = (e) => {
+    e.preventDefault();
+    const c = parseFloat(inputCollat) || 0;
+    const d = parseFloat(inputDebt) || 0;
+    const lt = parseFloat(inputLt) || 0.825;
+
+    if (c <= 0 || d <= 0) return;
+
+    if (onUpdateCustomPosition) {
+      onUpdateCustomPosition({
+        collateral_usd: c,
+        debt_usd: d,
+        collateral_symbol: inputSymbol,
+        collateral_amount: inputSymbol === 'ETH' ? c / 3000 : inputSymbol === 'WBTC' ? c / 65000 : c / 180,
+        collateral_price: inputSymbol === 'ETH' ? 3000 : inputSymbol === 'WBTC' ? 65000 : 180,
+        protocol: 'Aave v3',
+        chain: 'Arbitrum',
+        liquidation_threshold: lt,
+      });
+    }
+    setIsEditingPosition(false);
+  };
 
   const getRiskBadge = (hf) => {
     if (hf >= 1.5) {
@@ -115,10 +234,10 @@ export default function PortfolioDashboard({
     };
   };
 
-  const aggBadge = getRiskBadge(aggregate_health_factor);
+  const aggBadge = getRiskBadge(effectiveHf);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 animate-in fade-in duration-300">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b-2 border-black pb-4">
         <div>
@@ -131,7 +250,15 @@ export default function PortfolioDashboard({
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
+          <button
+            onClick={() => setIsEditingPosition((prev) => !prev)}
+            className="px-3.5 py-2 rounded-xl bg-[#fef08a] hover:bg-[#fde047] text-black border-2 border-black shadow-[3px_3px_0_#000] active:translate-x-[1px] active:translate-y-[1px] text-xs font-black flex items-center space-x-1.5 transition-all"
+          >
+            <Edit3 className="w-3.5 h-3.5" />
+            <span>{isEditingPosition ? 'Hide Editor' : 'Edit Position Numbers ($)'}</span>
+          </button>
+
           <button
             onClick={onRefresh}
             disabled={loading}
@@ -143,7 +270,96 @@ export default function PortfolioDashboard({
         </div>
       </div>
 
-      {/* 4 Summary Cards */}
+      {/* Interactive Position Editor Bar (When Opened) */}
+      {isEditingPosition && (
+        <div className="p-4 rounded-2xl bg-white border-2 border-black shadow-[4px_4px_0_#000] space-y-3 animate-in fade-in duration-200">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-black/10 pb-2">
+            <span className="text-xs font-mono font-black uppercase text-black flex items-center gap-1.5">
+              <Sliders className="w-4 h-4 text-[#3b82f6]" />
+              Adjust Position Metrics (Changes reflect immediately below)
+            </span>
+            <div className="flex items-center space-x-1.5">
+              <button
+                type="button"
+                onClick={() => handleApplyPreset('aave_eth')}
+                className="px-2 py-0.5 text-[10px] font-mono font-black bg-white hover:bg-[#fef08a] border border-black rounded shadow-[1px_1px_0_#000]"
+              >
+                Aave ETH ($7.5k / $4.5k)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset('aave_wbtc')}
+                className="px-2 py-0.5 text-[10px] font-mono font-black bg-white hover:bg-[#fef08a] border border-black rounded shadow-[1px_1px_0_#000]"
+              >
+                Aave WBTC ($9.7k / $7k)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset('demo_fleet')}
+                className="px-2 py-0.5 text-[10px] font-mono font-black bg-white hover:bg-[#fef08a] border border-black rounded shadow-[1px_1px_0_#000]"
+              >
+                Original Fleet ($176k / $95k)
+              </button>
+            </div>
+          </div>
+
+          <form onSubmit={handleSaveCustomMetrics} className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <div>
+              <label className="block text-[10px] font-mono font-black text-black mb-1">
+                Total Collateral ($)
+              </label>
+              <input
+                type="number"
+                step="any"
+                required
+                value={inputCollat}
+                onChange={(e) => setInputCollat(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-black text-xs text-[#16a34a] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono font-black text-black mb-1">
+                Total Debt ($)
+              </label>
+              <input
+                type="number"
+                step="any"
+                required
+                value={inputDebt}
+                onChange={(e) => setInputDebt(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-black text-xs text-[#dc2626] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono font-black text-black mb-1">
+                Liquidation Threshold (LT)
+              </label>
+              <input
+                type="number"
+                step="0.001"
+                min="0.5"
+                max="0.99"
+                required
+                value={inputLt}
+                onChange={(e) => setInputLt(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-black text-xs focus:outline-none"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn-3d-royal py-2 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-1.5"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Update Metrics</span>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* 4 Summary Cards (Exact match to screenshot, dynamically bound!) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Collateral */}
         <div className="paper-card p-5 rounded-2xl relative overflow-hidden border-2 border-black shadow-[4px_4px_0_#000] bg-white">
@@ -152,9 +368,11 @@ export default function PortfolioDashboard({
             <DollarSign className="w-4 h-4 text-[#16a34a]" />
           </div>
           <div className="text-2xl font-black font-mono text-black">
-            ${total_collateral_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${effectiveCollat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-black/60 mt-2 font-bold">Active across 3 lending protocols</p>
+          <p className="text-[11px] text-black/60 mt-2 font-bold font-mono">
+            {customPosition?.collateral_amount ? `${customPosition.collateral_amount} ${customPosition.collateral_symbol || 'ETH'}` : 'Active borrowing position'}
+          </p>
         </div>
 
         {/* Total Outstanding Debt */}
@@ -164,9 +382,9 @@ export default function PortfolioDashboard({
             <TrendingDown className="w-4 h-4 text-[#dc2626]" />
           </div>
           <div className="text-2xl font-black font-mono text-black">
-            ${total_debt_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${effectiveDebt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-black/60 mt-2 font-bold">Pegged stablecoin borrows</p>
+          <p className="text-[11px] text-black/60 mt-2 font-bold font-mono">Pegged stablecoin borrows</p>
         </div>
 
         {/* Net Borrower Equity */}
@@ -176,9 +394,9 @@ export default function PortfolioDashboard({
             <TrendingUp className="w-4 h-4 text-[#2563eb]" />
           </div>
           <div className="text-2xl font-black font-mono text-black">
-            ${net_worth_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ${effectiveNetWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <p className="text-[11px] text-black/60 mt-2 font-bold">Collateral + wallet minus borrows</p>
+          <p className="text-[11px] text-black/60 mt-2 font-bold font-mono">Collateral minus borrows</p>
         </div>
 
         {/* Aggregate Health Factor */}
@@ -188,13 +406,15 @@ export default function PortfolioDashboard({
             <Scale className="w-4 h-4 text-[#2563eb]" />
           </div>
           <div className="flex items-baseline space-x-2">
-            <span className="text-2xl font-black font-mono text-black">{aggregate_health_factor.toFixed(2)}</span>
+            <span className="text-2xl font-black font-mono text-black">
+              {effectiveHf > 99 ? '∞' : effectiveHf.toFixed(2)}
+            </span>
             <span className={`px-2 py-0.5 rounded text-[10px] font-mono border-2 border-black inline-flex items-center ${aggBadge.classes}`}>
               {aggBadge.icon}
               {aggBadge.label}
             </span>
           </div>
-          <p className="text-[11px] text-black/60 mt-2 font-bold">Liquidation boundary is &lt; 1.00</p>
+          <p className="text-[11px] text-black/60 mt-2 font-bold font-mono">Liquidation boundary is &lt; 1.00</p>
         </div>
       </div>
 
@@ -244,7 +464,66 @@ export default function PortfolioDashboard({
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {lending_summaries.map((pos, idx) => {
+          {/* If custom position is set, prioritize user's configured position */}
+          {customPosition ? (
+            <div className="paper-card rounded-2xl p-6 border-2 border-black shadow-[4px_4px_0_#000] bg-white hover:shadow-[5px_5px_0_#000] transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <span className="text-xs font-mono uppercase tracking-wider text-black/70 font-bold">
+                      {customPosition.chain || 'Arbitrum'}
+                    </span>
+                    <h4 className="text-lg font-black text-black">{customPosition.protocol || 'Aave v3'}</h4>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-md text-xs font-mono border-2 border-black inline-flex items-center ${aggBadge.classes}`}>
+                    {aggBadge.icon}
+                    {aggBadge.label}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 py-3 border-y-2 border-black mb-4">
+                  <div>
+                    <span className="text-[11px] text-black/70 font-mono font-bold">Collateral Value</span>
+                    <p className="text-sm font-mono font-black text-black">
+                      ${effectiveCollat.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-black/70 font-mono font-bold">Total Debt</span>
+                    <p className="text-sm font-mono font-black text-black">
+                      ${effectiveDebt.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-black/70 font-mono font-bold">Health Factor</span>
+                    <p className="text-base font-mono font-black text-[#2563eb]">
+                      {effectiveHf > 99 ? '∞' : effectiveHf.toFixed(3)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span className="text-[11px] text-black/70 font-mono font-bold">Net Equity</span>
+                    <p className="text-sm font-mono font-black text-black">
+                      ${effectiveNetWorth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onSelectPositionForSimulation('pos_aave_v3_eth')}
+                className="w-full btn-3d-royal py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>Simulate Flash Crash Shock</span>
+              </button>
+            </div>
+          ) : null}
+
+          {/* Additional / Default Protocol Cards */}
+          {(portfolio?.lending_summaries || []).map((pos, idx) => {
             const posBadge = getRiskBadge(pos.health_factor);
             const positionIdMap = {
               'Aave v3': 'pos_aave_v3_eth',
@@ -270,7 +549,6 @@ export default function PortfolioDashboard({
                     </span>
                   </div>
 
-                  {/* Metrics grid */}
                   <div className="grid grid-cols-2 gap-3 py-3 border-y-2 border-black mb-4">
                     <div>
                       <span className="text-[11px] text-black/70 font-mono font-bold">Collateral Value</span>
@@ -278,83 +556,40 @@ export default function PortfolioDashboard({
                         ${pos.collateral_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
+
                     <div>
-                      <span className="text-[11px] text-black/70 font-mono font-bold">Borrowed Debt</span>
+                      <span className="text-[11px] text-black/70 font-mono font-bold">Total Debt</span>
                       <p className="text-sm font-mono font-black text-black">
                         ${pos.debt_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
+
                     <div>
                       <span className="text-[11px] text-black/70 font-mono font-bold">Health Factor</span>
                       <p className="text-base font-mono font-black text-[#2563eb]">
                         {pos.health_factor.toFixed(3)}
                       </p>
                     </div>
+
                     <div>
-                      <span className="text-[11px] text-black/70 font-mono font-bold">Borrow Capacity</span>
-                      <p className="text-sm font-mono font-bold text-black/80">
-                        ${pos.net_borrow_capacity_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span className="text-[11px] text-black/70 font-mono font-bold">Net Equity</span>
+                      <p className="text-sm font-mono font-black text-black">
+                        ${(pos.collateral_usd - pos.debt_usd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* Stress test action */}
                 <button
                   onClick={() => onSelectPositionForSimulation(posId)}
-                  className="w-full mt-2 btn-3d-royal py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2"
+                  className="w-full btn-3d-royal py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2"
                 >
-                  <Sliders className="w-3.5 h-3.5 text-white" />
-                  <span>Stress Test This Position</span>
+                  <Sliders className="w-3.5 h-3.5" />
+                  <span>Simulate Flash Crash Shock</span>
                 </button>
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* Monitored Wallet Spot Balances */}
-      <div className="paper-card rounded-2xl p-6 border-2 border-black shadow-[4px_4px_0_#000] bg-white">
-        <div className="mb-4">
-          <h3 className="text-base font-black text-black">Liquid Wallet Assets (Unencumbered)</h3>
-          <p className="text-xs text-black/70 font-medium">Available reserves that can be deposited to bolster collateral buffers</p>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="text-[11px] text-black uppercase tracking-wider border-b-2 border-black">
-              <tr>
-                <th className="pb-3 font-black font-mono">Asset</th>
-                <th className="pb-3 font-black font-mono">Chain</th>
-                <th className="pb-3 font-black font-mono">Holding</th>
-                <th className="pb-3 font-black font-mono">CoinGecko Price</th>
-                <th className="pb-3 font-black font-mono">24h Change</th>
-                <th className="pb-3 font-black font-mono text-right">Value (USD)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y-2 border-b-2 border-black divide-black/20 font-mono text-xs">
-              {wallet_assets.map((asset, i) => (
-                <tr key={i} className="hover:bg-[#fef08a]/30 transition-colors">
-                  <td className="py-3.5 font-bold text-black flex items-center space-x-2 font-sans">
-                    <span className="w-7 h-7 rounded-lg bg-[#fef08a] border-2 border-black flex items-center justify-center font-mono font-black text-xs text-black shadow-[1px_1px_0_#000]">
-                      {asset.symbol.slice(0, 1)}
-                    </span>
-                    <span className="font-black">{asset.name}</span>
-                    <span className="text-black/60 text-xs font-bold">({asset.symbol})</span>
-                  </td>
-                  <td className="py-3.5 text-black/80 capitalize font-sans font-medium">{asset.chain}</td>
-                  <td className="py-3.5 text-black font-bold">{asset.amount.toLocaleString()} {asset.symbol}</td>
-                  <td className="py-3.5 text-black font-bold">${asset.usd_price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                  <td className={`py-3.5 font-black ${asset.price_24h_change_pct >= 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
-                    {asset.price_24h_change_pct >= 0 ? '+' : ''}{asset.price_24h_change_pct.toFixed(2)}%
-                  </td>
-                  <td className="py-3.5 text-right font-black text-black">
-                    ${asset.usd_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

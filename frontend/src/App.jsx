@@ -37,6 +37,16 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [activeWallet, setActiveWallet] = useState(null);
 
+  // Registered custom position metrics (collateral & debt configured at registration)
+  const [customPosition, setCustomPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bachega_position');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
   // Dashboard tab state: 'dashboard' | 'simulator' | 'alerts'
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedPositionForSim, setSelectedPositionForSim] = useState('pos_aave_v3_eth');
@@ -63,8 +73,8 @@ export default function App() {
         const cleanEmail = cachedUser.email?.toLowerCase().trim();
         const hasOnboarded = localStorage.getItem(`bachega_onboarded_${cleanEmail}`) === 'true';
 
-        if (hasOnboarded && cachedWallet) {
-          setActiveWallet(cachedWallet);
+        if (hasOnboarded && (cachedWallet || customPosition)) {
+          if (cachedWallet) setActiveWallet(cachedWallet);
           setCurrentView('dashboard');
         } else {
           setCurrentView('onboard');
@@ -99,7 +109,7 @@ export default function App() {
         const hasOnboarded = localStorage.getItem(`bachega_onboarded_${cleanEmail}`) === 'true';
         const savedWalletStr = localStorage.getItem('bachega_wallet');
 
-        if (hasOnboarded && (savedWalletStr || cachedWallet)) {
+        if (hasOnboarded && (savedWalletStr || cachedWallet || customPosition)) {
           setCurrentView('dashboard');
         } else {
           setCurrentView('onboard');
@@ -125,7 +135,7 @@ export default function App() {
         const hasOnboarded = localStorage.getItem(`bachega_onboarded_${cleanEmail}`) === 'true';
         const savedWallet = localStorage.getItem('bachega_wallet');
 
-        if (hasOnboarded && savedWallet) {
+        if (hasOnboarded && (savedWallet || customPosition)) {
           setCurrentView('dashboard');
         } else {
           setCurrentView('onboard');
@@ -133,9 +143,11 @@ export default function App() {
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setActiveWallet(null);
+        setCustomPosition(null);
         try {
           localStorage.removeItem('bachega_user');
           localStorage.removeItem('bachega_wallet');
+          localStorage.removeItem('bachega_position');
           localStorage.removeItem('bachega_telegram_chat_id');
           localStorage.removeItem('bachega_telegram_username');
           localStorage.removeItem('bachega_telegram_verified');
@@ -196,7 +208,7 @@ export default function App() {
   };
 
   // 4. Successful Authentication Handler (from AuthModal)
-  const handleAuthSuccess = (userData, isNewRegistration = false) => {
+  const handleAuthSuccess = (userData, isNewRegistration = false, userPosition = null) => {
     const cleanEmail = userData.email?.toLowerCase().trim();
     const formattedUser = {
       id: userData.id || 'usr_' + Date.now(),
@@ -210,15 +222,27 @@ export default function App() {
     } catch (e) {
       console.warn('localStorage write failed:', e);
     }
+
+    if (userPosition) {
+      setCustomPosition(userPosition);
+      try {
+        localStorage.setItem('bachega_position', JSON.stringify(userPosition));
+        localStorage.setItem(`bachega_onboarded_${cleanEmail}`, 'true');
+      } catch (e) {}
+    }
+
     setIsAuthModalOpen(false);
 
-    // If new registration or has NOT completed onboarding yet, ALWAYS route to onboarding!
-    const hasCompletedOnboard = !isNewRegistration && (localStorage.getItem(`bachega_onboarded_${cleanEmail}`) === 'true');
-
-    if (hasCompletedOnboard) {
+    if (userPosition) {
       setCurrentView('dashboard');
+      setActiveTab('dashboard');
     } else {
-      setCurrentView('onboard');
+      const hasCompletedOnboard = !isNewRegistration && (localStorage.getItem(`bachega_onboarded_${cleanEmail}`) === 'true');
+      if (hasCompletedOnboard) {
+        setCurrentView('dashboard');
+      } else {
+        setCurrentView('onboard');
+      }
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -227,6 +251,14 @@ export default function App() {
   const handleCompleteOnboarding = async (walletData) => {
     setActiveWallet(walletData);
     const cleanEmail = user?.email?.toLowerCase().trim();
+
+    if (walletData.userPosition) {
+      setCustomPosition(walletData.userPosition);
+      try {
+        localStorage.setItem('bachega_position', JSON.stringify(walletData.userPosition));
+      } catch (e) {}
+    }
+
     try {
       localStorage.setItem('bachega_wallet', JSON.stringify(walletData));
       if (cleanEmail) {
@@ -258,6 +290,7 @@ export default function App() {
     try {
       localStorage.removeItem('bachega_user');
       localStorage.removeItem('bachega_wallet');
+      localStorage.removeItem('bachega_position');
       localStorage.removeItem('bachega_telegram_chat_id');
       localStorage.removeItem('bachega_telegram_username');
       localStorage.removeItem('bachega_telegram_verified');
@@ -267,6 +300,7 @@ export default function App() {
     }
     setUser(null);
     setActiveWallet(null);
+    setCustomPosition(null);
     setCurrentView('landing');
     setActiveTab('dashboard');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -337,6 +371,13 @@ export default function App() {
                 onRefresh={loadData}
                 onSelectPositionForSimulation={handleSelectPositionForSim}
                 onOpenTelegramModal={() => setIsTelegramModalOpen(true)}
+                customPosition={customPosition}
+                onUpdateCustomPosition={(newPos) => {
+                  setCustomPosition(newPos);
+                  try {
+                    localStorage.setItem('bachega_position', JSON.stringify(newPos));
+                  } catch (e) {}
+                }}
               />
             )}
 

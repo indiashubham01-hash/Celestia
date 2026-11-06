@@ -10,7 +10,11 @@ import {
   Wallet,
   Send,
   Layers,
-  Check
+  Check,
+  DollarSign,
+  TrendingDown,
+  Scale,
+  Sliders
 } from 'lucide-react';
 import TelegramConnectCard from './TelegramConnectCard';
 
@@ -38,6 +42,15 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
   const [chain, setChain] = useState('arbitrum');
   const [address, setAddress] = useState(DEMO_ADDRESS);
   const [label, setLabel] = useState('Aave V3 Arbitrum Vault');
+
+  // Position Parameters (Collateral & Debt numbers)
+  const [collateralSymbol, setCollateralSymbol] = useState('ETH');
+  const [collateralAmount, setCollateralAmount] = useState('2.5');
+  const [collateralPrice, setCollateralPrice] = useState('3000');
+  const [collateralUsd, setCollateralUsd] = useState('7500');
+  const [debtUsd, setDebtUsd] = useState('4500');
+  const [liquidationThreshold, setLiquidationThreshold] = useState('0.825');
+
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -48,11 +61,30 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
       setChain('arbitrum');
       setAddress(DEMO_ADDRESS);
       setLabel('Aave V3 Arbitrum Vault');
+      setCollateralSymbol('ETH');
+      setCollateralAmount('2.5');
+      setCollateralPrice('3000');
+      setCollateralUsd('7500');
+      setDebtUsd('4500');
     } else {
       setAddress('');
       setLabel('My DeFi Vault');
     }
   };
+
+  const handleAmountOrPriceChange = (newAmount, newPrice) => {
+    setCollateralAmount(newAmount);
+    setCollateralPrice(newPrice);
+    const amt = parseFloat(newAmount) || 0;
+    const prc = parseFloat(newPrice) || 0;
+    setCollateralUsd((amt * prc).toFixed(2));
+  };
+
+  const cVal = parseFloat(collateralUsd) || 0;
+  const dVal = parseFloat(debtUsd) || 0;
+  const ltVal = parseFloat(liquidationThreshold) || 0.825;
+  const previewHf = dVal > 0 ? (cVal * ltVal) / dVal : 999;
+  const previewEquity = cVal - dVal;
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -68,8 +100,24 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
       return;
     }
 
+    if (cVal <= 0 || dVal <= 0) {
+      setError('Please ensure Collateral and Debt are positive values.');
+      return;
+    }
+
     setError(null);
     setLoading(true);
+
+    const userPosition = {
+      collateral_usd: cVal,
+      debt_usd: dVal,
+      collateral_amount: parseFloat(collateralAmount) || 2.5,
+      collateral_symbol: collateralSymbol,
+      collateral_price: parseFloat(collateralPrice) || 3000,
+      protocol: protocol === 'aave_v3' ? 'Aave v3' : protocol === 'compound_v3' ? 'Compound v3' : 'Spark Protocol',
+      chain,
+      liquidation_threshold: ltVal,
+    };
 
     setTimeout(() => {
       setLoading(false);
@@ -80,42 +128,43 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
         protocol,
         borrowerName: borrowerName.trim() || user?.email?.split('@')[0] || 'Borrower',
         is_primary: true,
+        userPosition,
       });
     }, 300);
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12 animate-in fade-in duration-300">
+    <div className="max-w-2xl mx-auto px-4 py-10 animate-in fade-in duration-300">
       <div className="paper-card rounded-2xl p-6 sm:p-8 space-y-6 border-2 border-black shadow-[6px_6px_0_#000] bg-white">
         {/* Onboarding Header */}
         <div className="border-b-2 border-black pb-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <span className="text-xs font-mono font-black uppercase tracking-wider text-black bg-[#fef08a] px-2.5 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
-              ACCOUNT ONBOARDING • SETUP YOUR WORKBENCH
+              WORKBENCH SETUP • CONFIGURE POSITION
             </span>
             <span className="text-xs font-mono font-black text-black/70 bg-black/5 px-2 py-0.5 rounded">
               {user?.email || 'Authenticated'}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-black tracking-tight">
-            Welcome to Bachega.fi
+            Configure Your Borrowing Position
           </h2>
           <p className="text-xs sm:text-sm text-black/80 mt-1 font-sans font-medium">
-            Configure your borrower profile, choose a position to monitor, and link our Telegram bot for instant liquidation warnings.
+            Enter your active loan numbers to customize your risk workbench, and link our Telegram bot for instant liquidation warnings.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* SECTION 1: Borrower Profile Information */}
-          <div className="p-4 rounded-xl bg-[#fffdf5] border-2 border-black shadow-[3px_3px_0_#000] space-y-4">
+          {/* SECTION 1: Borrower Profile */}
+          <div className="p-4 rounded-xl bg-[#fffdf5] border-2 border-black shadow-[3px_3px_0_#000] space-y-3.5">
             <div className="flex items-center space-x-2 border-b-2 border-black/10 pb-2">
               <User className="w-4 h-4 text-[#3b82f6]" />
               <h3 className="text-xs font-mono font-black uppercase text-black">
-                Step 1: Borrower Information
+                Step 1: Borrower Details
               </h3>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
                 <label className="block text-xs font-black text-black mb-1 font-mono">
                   Display Name / Handle
@@ -148,21 +197,21 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
             </div>
           </div>
 
-          {/* SECTION 2: Wallet & Position Selection */}
+          {/* SECTION 2: Position Metrics (Collateral, Debt, Health Factor) */}
           <div className="p-4 rounded-xl bg-[#fffdf5] border-2 border-black shadow-[3px_3px_0_#000] space-y-4">
             <div className="flex items-center justify-between border-b-2 border-black/10 pb-2">
               <div className="flex items-center space-x-2">
-                <Wallet className="w-4 h-4 text-[#16a34a]" />
+                <Sliders className="w-4 h-4 text-[#16a34a]" />
                 <h3 className="text-xs font-mono font-black uppercase text-black">
-                  Step 2: Position To Stress-Test
+                  Step 2: Position Numbers (Collateral &amp; Debt)
                 </h3>
               </div>
               <span className="text-[10px] font-mono font-bold bg-[#86efac] text-[#065f46] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
-                100% READ-ONLY
+                CUSTOMIZABLE
               </span>
             </div>
 
-            {/* Mode Selector: Demo vs Custom */}
+            {/* Mode Selector */}
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -176,12 +225,12 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-black flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-[#3b82f6]" />
-                    Live Demo Vault
+                    Aave V3 Preset
                   </span>
                   {walletMode === 'demo' && <Check className="w-3.5 h-3.5 text-black" />}
                 </div>
                 <p className="text-[11px] text-black/70 mt-1 font-medium">
-                  Verified Aave v3 Arbitrum position (2.5 ETH, $4.5k debt). No setup needed.
+                  2.5 ETH ($7,500 Collat) / $4,500 Debt
                 </p>
               </button>
 
@@ -197,79 +246,150 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black text-black flex items-center gap-1.5">
                     <Layers className="w-3.5 h-3.5 text-[#3b82f6]" />
-                    Track My Address
+                    Custom Position
                   </span>
                   {walletMode === 'custom' && <Check className="w-3.5 h-3.5 text-black" />}
                 </div>
                 <p className="text-[11px] text-black/70 mt-1 font-medium">
-                  Paste any public 0x address. Non-custodial, no private keys required.
+                  Type your own exact Collateral &amp; Debt
                 </p>
               </button>
             </div>
 
-            {/* Custom Wallet Inputs */}
-            {walletMode === 'custom' ? (
-              <div className="space-y-3 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1 font-mono">
-                      Blockchain Network
-                    </label>
-                    <select
-                      value={chain}
-                      onChange={(e) => setChain(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black text-xs font-black focus:outline-none shadow-[2px_2px_0_#000]"
-                    >
-                      {CHAINS.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} ({c.symbol})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-black text-black mb-1 font-mono">
-                      Position Label / Nickname
-                    </label>
-                    <input
-                      type="text"
-                      value={label}
-                      onChange={(e) => setLabel(e.target.value)}
-                      placeholder="e.g. My Arbitrum Vault"
-                      className="w-full px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black text-xs font-mono font-bold focus:outline-none focus:shadow-[3px_3px_0_#000]"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-black text-black mb-1 font-mono">
-                    Public Wallet Address (0x...)
-                  </label>
+            {/* Metric Inputs Grid */}
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div>
+                <label className="block text-[11px] font-mono font-black text-black mb-1">
+                  Collateral Amount &amp; Token
+                </label>
+                <div className="flex space-x-1.5">
                   <input
-                    type="text"
+                    type="number"
+                    step="any"
                     required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="0x71C8401344445853782977E2A91D61b9a957B7E6"
-                    className="w-full px-3.5 py-2 rounded-xl bg-white border-2 border-black text-black text-xs font-mono font-bold focus:outline-none focus:shadow-[3px_3px_0_#000]"
+                    value={collateralAmount}
+                    onChange={(e) => handleAmountOrPriceChange(e.target.value, collateralPrice)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-bold text-xs focus:outline-none"
                   />
+                  <select
+                    value={collateralSymbol}
+                    onChange={(e) => setCollateralSymbol(e.target.value)}
+                    className="px-2 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-black text-xs"
+                  >
+                    <option value="ETH">ETH</option>
+                    <option value="WBTC">WBTC</option>
+                    <option value="SOL">SOL</option>
+                  </select>
                 </div>
               </div>
-            ) : (
-              <div className="p-3 rounded-xl bg-white border-2 border-black/20 text-xs font-mono flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-black">Active Preset: </span>
-                  <span className="text-black/80">Arbitrum One • 0x71C8...B7E6</span>
-                </div>
-                <span className="text-[10px] font-black uppercase bg-[#86efac] text-[#065f46] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
-                  Preloaded
+
+              <div>
+                <label className="block text-[11px] font-mono font-black text-black mb-1">
+                  Asset Price ($)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={collateralPrice}
+                  onChange={(e) => handleAmountOrPriceChange(collateralAmount, e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-bold text-xs focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono font-black text-black mb-1">
+                  Total Collateral Value ($)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={collateralUsd}
+                  onChange={(e) => setCollateralUsd(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-black text-xs text-[#16a34a] focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono font-black text-black mb-1">
+                  Total Outstanding Debt ($)
+                </label>
+                <input
+                  type="number"
+                  step="any"
+                  required
+                  value={debtUsd}
+                  onChange={(e) => setDebtUsd(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg bg-white border-2 border-black text-black font-mono font-black text-xs text-[#dc2626] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Wallet Address Input */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t-2 border-black/10">
+              <div>
+                <label className="block text-[11px] font-mono font-black text-black mb-1">
+                  Blockchain Network
+                </label>
+                <select
+                  value={chain}
+                  onChange={(e) => setChain(e.target.value)}
+                  className="w-full px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black text-xs font-black focus:outline-none"
+                >
+                  {CHAINS.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.symbol})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono font-black text-black mb-1">
+                  Public Wallet Address (0x...)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="0x71C8401344445853782977E2A91D61b9a957B7E6"
+                  className="w-full px-3 py-1.5 rounded-lg bg-white border-2 border-black text-black text-xs font-mono font-bold focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Live Metrics Summary Card */}
+            <div className="p-3 rounded-xl bg-[#fef08a] border-2 border-black shadow-[2px_2px_0_#000] grid grid-cols-3 gap-2 text-center">
+              <div>
+                <span className="block text-[9px] font-mono uppercase font-black text-black/70">
+                  Total Collateral
+                </span>
+                <span className="text-sm font-mono font-black text-black">
+                  ${cVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
-            )}
+              <div>
+                <span className="block text-[9px] font-mono uppercase font-black text-black/70">
+                  Total Debt
+                </span>
+                <span className="text-sm font-mono font-black text-black">
+                  ${dVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div>
+                <span className="block text-[9px] font-mono uppercase font-black text-black/70">
+                  Health Factor
+                </span>
+                <span className="text-sm font-mono font-black text-black">
+                  {previewHf > 99 ? '∞' : previewHf.toFixed(2)}
+                </span>
+              </div>
+            </div>
 
             {error && (
-              <div className="p-3 rounded-xl bg-[#fee2e2] border-2 border-black shadow-[2px_2px_0_#000] text-xs text-[#991515] flex items-center space-x-2 font-bold">
+              <div className="p-2.5 rounded-xl bg-[#fee2e2] border-2 border-black shadow-[2px_2px_0_#000] text-xs text-[#991515] flex items-center space-x-2 font-bold">
                 <AlertCircle className="w-4 h-4 shrink-0 text-[#dc2626]" />
                 <span>{error}</span>
               </div>
@@ -290,7 +410,6 @@ export default function OnboardingCard({ user, onCompleteOnboarding, onSkipToDem
               </span>
             </div>
 
-            {/* Embedded 1-Click Telegram Card */}
             <TelegramConnectCard currentUser={user} />
           </div>
 
