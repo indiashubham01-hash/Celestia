@@ -78,6 +78,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
+  calculateSimulation: (payload) =>
+    request('/api/simulations', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   // 5. Alerts & Verification
   getAlertPreferences: () => request('/api/alerts/preferences'),
