@@ -1,0 +1,42 @@
+services:
+  # 1. FastAPI Mathematical & DeFi Risk Engine
+  - type: web
+    name: bachega-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: PORT
+        value: 8000
+
+  # 2. Telegram Quantitative Risk Bot (@Bachega_bot)
+  - type: worker
+    name: bachega-telegram-bot
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: python bot.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: TELEGRAM_BOT_USERNAME
+        value: "@Bachega_bot"
+
+  # 3. React Frontend (Neo-Brutalist Dashboard)
+  - type: web
+    name: bachega-frontend
+    runtime: static
+    plan: free
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
