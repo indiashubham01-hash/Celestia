@@ -65,14 +65,42 @@ async function request(endpoint, options = {}) {
 // Client-Side Deterministic DeFi Math Engine (Offline / Deployment Fallback)
 // ---------------------------------------------------------------------------
 function calculateClientSimulation(payload) {
-  const collatAmt = payload.collateral_amount !== undefined ? Number(payload.collateral_amount) : 2.5;
-  const spotPrice = payload.collateral_price_usd !== undefined ? Number(payload.collateral_price_usd) : 3000.0;
-  const debt = payload.debt_usd !== undefined ? Number(payload.debt_usd) : 4500.0;
-  const lt = payload.liquidation_threshold !== undefined ? Number(payload.liquidation_threshold) : 0.825;
-  const shockPct = payload.price_shock_pct !== undefined ? Number(payload.price_shock_pct) : -35.0;
+  let collatAmt = payload.collateral_amount !== undefined ? Number(payload.collateral_amount) : null;
+  let spotPrice = payload.collateral_price_usd !== undefined ? Number(payload.collateral_price_usd) : null;
+  let debt = payload.debt_usd !== undefined ? Number(payload.debt_usd) : null;
+  let lt = payload.liquidation_threshold !== undefined ? Number(payload.liquidation_threshold) : null;
+  const shockPct = payload.price_shock_pct !== undefined ? Number(payload.price_shock_pct) : -25.0;
   const budget = payload.rescue_budget_usd !== undefined ? Number(payload.rescue_budget_usd) : 750.0;
   const stableLt = payload.stable_lt !== undefined ? Number(payload.stable_lt) : 0.90;
   const targetHf = payload.target_hf !== undefined ? Number(payload.target_hf) : 1.10;
+
+  // If parameters not directly supplied in payload, check position_id or localStorage
+  if (collatAmt === null || spotPrice === null || debt === null || lt === null) {
+    let savedPos = null;
+    try {
+      const saved = localStorage.getItem('bachega_position');
+      if (saved) savedPos = JSON.parse(saved);
+    } catch (e) {}
+
+    const posId = payload.position_id || 'pos_aave_v3_eth';
+    if (posId === 'pos_comp_v3_arb') {
+      collatAmt = 1.10;
+      spotPrice = 88400.0;
+      debt = 54000.0;
+      lt = 0.77;
+    } else if (posId === 'pos_spark_eth') {
+      collatAmt = 8.0;
+      spotPrice = 3820.0;
+      debt = 19500.0;
+      lt = 0.84;
+    } else {
+      // Default / Aave v3
+      collatAmt = savedPos?.collateral_amount ? Number(savedPos.collateral_amount) : (savedPos?.collateral_usd ? Number(savedPos.collateral_usd) / 3000.0 : 2.5);
+      spotPrice = savedPos?.collateral_price_usd ? Number(savedPos.collateral_price_usd) : 3000.0;
+      debt = savedPos?.debt_usd ? Number(savedPos.debt_usd) : 4500.0;
+      lt = savedPos?.liquidation_threshold ? Number(savedPos.liquidation_threshold) : 0.825;
+    }
+  }
 
   const c0 = collatAmt * spotPrice;
   const hf0 = debt > 0 ? (c0 * lt) / debt : 999.0;
@@ -98,8 +126,76 @@ function calculateClientSimulation(payload) {
   const remCol = Math.max(0.0, shockedCollat - deltaSold);
   const hfDeleveraged = remDebt > 0 ? (remCol * lt) / remDebt : 999.0;
 
+  // Pre-calculate full multi-step shock curves for CrashSimulator (-10% to -50%)
+  const shockLevels = [-10, -20, -25, -35, -50];
+  const repayAmounts = payload.repay_amounts_usd && payload.repay_amounts_usd.length > 0
+    ? payload.repay_amounts_usd
+    : [Math.round(debt * 0.1), Math.round(debt * 0.25), Math.round(debt * 0.5)];
+  const addAmounts = payload.add_collateral_amounts_usd && payload.add_collateral_amounts_usd.length > 0
+    ? payload.add_collateral_amounts_usd
+    : [Math.round(c0 * 0.1), Math.round(c0 * 0.25), Math.round(c0 * 0.5)];
+
+  const results = shockLevels.map((lvl) => {
+    const pS = spotPrice * (1.0 + lvl / 100.0);
+    const colS = collatAmt * pS;
+    const hfStep = debt > 0 ? (colS * lt) / debt : 999.0;
+    const ltvStep = colS > 0 ? (debt / colS) * 100.0 : 0.0;
+    const isLiqStep = hfStep < 1.0;
+    const shortfall = isLiqStep ? Math.max(0, debt - colS * lt) : 0;
+
+    const repays = repayAmounts.map((amt) => {
+      const nD = Math.max(1.0, debt - amt);
+      const hfR = (colS * lt) / nD;
+      return {
+        repay_amount_usd: amt,
+        simulated_debt_usd: Math.round(nD * 100) / 100,
+        simulated_health_factor: Math.round(hfR * 1000) / 1000,
+        simulated_ltv_pct: colS > 0 ? Math.round((nD / colS) * 1000) / 10 : 0.0,
+        buffer_to_liquidation_usd: Math.max(0, Math.round((colS * lt - nD) * 100) / 100),
+      };
+    });
+
+    const collats = addAmounts.map((amt) => {
+      const nC = colS + amt;
+      const hfA = debt > 0 ? (nC * lt) / debt : 999.0;
+      return {
+        collateral_added_usd: amt,
+        simulated_collateral_usd: Math.round(nC * 100) / 100,
+        simulated_health_factor: Math.round(hfA * 1000) / 1000,
+        simulated_ltv_pct: nC > 0 ? Math.round((debt / nC) * 1000) / 10 : 0.0,
+        buffer_to_liquidation_usd: Math.max(0, Math.round((nC * lt - debt) * 100) / 100),
+      };
+    });
+
+    const hfSwp = debt > 0 ? (colS * stableLt) / debt : 999.0;
+    const hfDel = targetHf;
+
+    return {
+      shock_percentage: lvl,
+      simulated_volatile_asset_price: Math.round(pS * 100) / 100,
+      do_nothing: {
+        simulated_health_factor: Math.round(hfStep * 1000) / 1000,
+        simulated_ltv_pct: Math.round(ltvStep * 10) / 10,
+        simulated_collateral_usd: Math.round(colS * 100) / 100,
+        is_liquidated: isLiqStep,
+        liquidation_shortfall_usd: Math.round(shortfall * 100) / 100,
+      },
+      repay_debt_scenarios: repays,
+      add_collateral_scenarios: collats,
+      collateral_swap: {
+        simulated_health_factor: Math.round(hfSwp * 1000) / 1000,
+        is_liquidated: hfSwp < 1.0,
+      },
+      partial_deleverage: {
+        simulated_health_factor: hfDel,
+        is_liquidated: false,
+      },
+    };
+  });
+
   return {
     status: 'ok',
+    results,
     position: {
       collateral_amount: collatAmt,
       collateral_price_usd: spotPrice,
@@ -169,6 +265,12 @@ function calculateClientSimulation(payload) {
         note: `Auto-sells $${Math.round(deltaSold)} collateral to restore HF to 1.10 with $0 cash`,
       },
     },
+    assumptions: [
+      'Instantaneous shock propagation without slippage or oracle latency.',
+      'Collateral swap assumes 0% fee flash swap into USDC at LT = 90.0%.',
+      'Partial deleverage model solves for exact collateral sale to hit Target HF 1.10 without liquidation penalties.',
+      'Borrow interest rates are frozen during shock evaluation interval.'
+    ]
   };
 }
 
@@ -315,28 +417,127 @@ export const api = {
 
   getPositionDetail: async (positionId) => {
     try {
-      return await request(`/api/positions/${positionId}`);
+      const res = await request(`/api/positions/${positionId}`);
+      if (res && res.liquidation_proximity_pct === undefined && res.liquidation_distance_pct !== undefined) {
+        res.liquidation_proximity_pct = -Math.abs(res.liquidation_distance_pct);
+      }
+      return res;
     } catch {
+      let savedPos = null;
+      try {
+        const saved = localStorage.getItem('bachega_position');
+        if (saved) savedPos = JSON.parse(saved);
+      } catch (e) {}
+
+      const posId = positionId || 'pos_aave_v3_eth';
+
+      if (posId === 'pos_comp_v3_arb') {
+        return {
+          position_id: 'pos_comp_v3_arb',
+          protocol: 'Compound v3',
+          chain: 'arbitrum',
+          wallet_address: '0x4838B106FCe9647Bdf1E7877BF73cE8B0BAD5f97',
+          total_collateral_usd: 97240.0,
+          total_debt_usd: 54000.0,
+          health_factor: 1.38,
+          current_ltv_pct: 55.5,
+          liquidation_threshold_pct: 77.0,
+          liquidation_price_usd: 63636.36,
+          liquidation_proximity_pct: -27.53,
+          liquidation_distance_pct: 27.53,
+          collateral_asset_symbol: 'WBTC',
+          collateral_asset_price_usd: 88400.0,
+          collaterals: [
+            {
+              symbol: 'WBTC',
+              amount: 1.10,
+              spot_price_usd: 88400.0,
+              liquidation_threshold_pct: 77.0,
+              max_ltv_pct: 70.0,
+              is_volatile: true,
+            },
+          ],
+          debts: [
+            {
+              symbol: 'USDT',
+              amount: 54000.0,
+              spot_price_usd: 1.0,
+              borrow_apy_pct: 6.2,
+              borrow_type: 'VARIABLE',
+            },
+          ],
+        };
+      }
+
+      if (posId === 'pos_spark_eth') {
+        return {
+          position_id: 'pos_spark_eth',
+          protocol: 'Spark Protocol',
+          chain: 'ethereum',
+          wallet_address: '0x71C8401344445853782977E2A91D61b9a957B7E6',
+          total_collateral_usd: 38560.0,
+          total_debt_usd: 19500.0,
+          health_factor: 1.62,
+          current_ltv_pct: 50.5,
+          liquidation_threshold_pct: 84.0,
+          liquidation_price_usd: 2898.81,
+          liquidation_proximity_pct: -38.27,
+          liquidation_distance_pct: 38.27,
+          collateral_asset_symbol: 'WSTETH',
+          collateral_asset_price_usd: 3820.0,
+          collaterals: [
+            {
+              symbol: 'WSTETH',
+              amount: 8.0,
+              spot_price_usd: 3820.0,
+              liquidation_threshold_pct: 84.0,
+              max_ltv_pct: 80.0,
+              is_volatile: true,
+            },
+          ],
+          debts: [
+            {
+              symbol: 'DAI',
+              amount: 19500.0,
+              spot_price_usd: 1.0,
+              borrow_apy_pct: 4.8,
+              borrow_type: 'VARIABLE',
+            },
+          ],
+        };
+      }
+
+      // Default: Aave V3 (with custom values if configured)
+      const collatAmt = savedPos?.collateral_amount ? Number(savedPos.collateral_amount) : (savedPos?.collateral_usd ? Number(savedPos.collateral_usd) / 3000.0 : 2.5);
+      const spotPrice = savedPos?.collateral_price_usd ? Number(savedPos.collateral_price_usd) : 3000.0;
+      const collatUsd = savedPos?.collateral_usd ? Number(savedPos.collateral_usd) : (collatAmt * spotPrice);
+      const debtUsd = savedPos?.debt_usd ? Number(savedPos.debt_usd) : 4500.0;
+      const lt = savedPos?.liquidation_threshold ? Number(savedPos.liquidation_threshold) : 0.825;
+      const hf = debtUsd > 0 ? (collatUsd * lt) / debtUsd : 1.375;
+      const pLiq = (collatAmt * lt > 0) ? (debtUsd / (collatAmt * lt)) : 2181.82;
+      const dropPct = hf > 0 ? (1.0 - 1.0 / hf) * 100.0 : 27.27;
+
       return {
-        position_id: positionId || 'pos_aave_v3_eth',
+        position_id: 'pos_aave_v3_eth',
         protocol: 'Aave v3',
         chain: 'arbitrum',
         wallet_address: '0x71C8401344445853782977E2A91D61b9a957B7E6',
-        total_collateral_usd: 7500.0,
-        total_debt_usd: 4500.0,
-        health_factor: 1.375,
-        current_ltv_pct: 60.0,
-        liquidation_threshold_pct: 82.5,
-        liquidation_price_usd: 2181.82,
-        liquidation_distance_pct: 27.27,
-        collateral_asset_symbol: 'ETH',
-        collateral_asset_price_usd: 3000.0,
+        total_collateral_usd: Math.round(collatUsd * 100) / 100,
+        total_debt_usd: Math.round(debtUsd * 100) / 100,
+        health_factor: Math.round(hf * 1000) / 1000,
+        current_ltv_pct: collatUsd > 0 ? Math.round((debtUsd / collatUsd) * 1000) / 10 : 60.0,
+        liquidation_threshold_pct: Math.round(lt * 1000) / 10,
+        liquidation_price_usd: Math.round(pLiq * 100) / 100,
+        liquidation_proximity_pct: -Math.round(dropPct * 100) / 100,
+        liquidation_distance_pct: Math.round(dropPct * 100) / 100,
+        collateral_asset_symbol: savedPos?.symbol || 'ETH',
+        collateral_asset_price_usd: spotPrice,
         collaterals: [
           {
-            symbol: 'ETH',
-            amount: 2.5,
-            spot_price_usd: 3000.0,
-            liquidation_threshold_pct: 82.5,
+            symbol: savedPos?.symbol || 'ETH',
+            amount: Math.round(collatAmt * 100) / 100,
+            spot_price_usd: spotPrice,
+            liquidation_threshold_pct: Math.round(lt * 1000) / 10,
             max_ltv_pct: 80.0,
             is_volatile: true,
           },
@@ -344,7 +545,7 @@ export const api = {
         debts: [
           {
             symbol: 'USDC',
-            amount: 4500.0,
+            amount: Math.round(debtUsd * 100) / 100,
             spot_price_usd: 1.0,
             borrow_apy_pct: 5.4,
             borrow_type: 'VARIABLE',

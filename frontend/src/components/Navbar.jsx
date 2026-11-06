@@ -226,6 +226,47 @@ export default function Navbar({
           </div>
         </div>
       </div>
+
+      {/* Mobile Tab Navigation (Always visible on mobile phones when on dashboard) */}
+      {isDashboardView && (
+        <div className="md:hidden flex items-center justify-around bg-[#fffdf5] border-t-2 border-black px-2 py-1.5 gap-1.5">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black flex items-center justify-center space-x-1 border-2 border-black transition-all ${
+              activeTab === 'dashboard'
+                ? 'bg-[#3b82f6] text-white shadow-[2px_2px_0_#000]'
+                : 'bg-white text-black shadow-[1px_1px_0_#000]'
+            }`}
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>[1] Vaults</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('simulator')}
+            className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black flex items-center justify-center space-x-1 border-2 border-black transition-all ${
+              activeTab === 'simulator'
+                ? 'bg-[#3b82f6] text-white shadow-[2px_2px_0_#000]'
+                : 'bg-white text-black shadow-[1px_1px_0_#000]'
+            }`}
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>[2] Simulate</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('alerts')}
+            className={`flex-1 py-1.5 px-2 rounded-lg text-[11px] font-black flex items-center justify-center space-x-1 border-2 border-black transition-all ${
+              activeTab === 'alerts'
+                ? 'bg-[#3b82f6] text-white shadow-[2px_2px_0_#000]'
+                : 'bg-white text-black shadow-[1px_1px_0_#000]'
+            }`}
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span>[3] Alerts</span>
+          </button>
+        </div>
+      )}
     </header>
   );
 }

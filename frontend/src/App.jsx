@@ -504,7 +504,14 @@ export default function App() {
             )}
 
             {activeTab === 'simulator' && (
-              <CrashSimulator preselectedPositionId={selectedPositionForSim} />
+              <CrashSimulator
+                preselectedPositionId={selectedPositionForSim}
+                customPosition={customPosition}
+                onBackToDashboard={() => {
+                  setActiveTab('dashboard');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              />
             )}
 
             {activeTab === 'alerts' && <AlertsPreferences />}
