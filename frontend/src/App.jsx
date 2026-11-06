@@ -265,7 +265,7 @@ export default function App() {
   const primaryWallet = activeWallet || wallets.find((w) => w.is_primary) || wallets[0];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#fdf5e6] text-[#1c1812] font-sans">
+    <div className="min-h-screen flex flex-col bg-[#fffdf5] text-black font-sans selection:bg-[#fef08a] selection:text-black">
       {/* Top Navigation Bar with active wallet, network badge, and Sign Out */}
       <Navbar
         currentView={currentView}

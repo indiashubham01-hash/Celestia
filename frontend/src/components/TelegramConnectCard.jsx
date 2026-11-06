@@ -122,27 +122,24 @@ export default function TelegramConnectCard({
 
   return (
     <div
-      className={`rounded-2xl p-6 border transition-all duration-300 relative overflow-hidden ${
+      className={`rounded-2xl p-6 border-2 border-black shadow-[4px_4px_0_#000] transition-all duration-300 relative overflow-hidden ${
         verified
-          ? 'bg-[#f4f7f4] border-[#86efac] border-b-4 border-[#4ade80] shadow-sm'
-          : 'bg-[#faf6ee] border-[#e8d4a8] border-b-4 border-[#d8c292] shadow-sm'
+          ? 'bg-[#86efac]/20'
+          : 'bg-white'
       } ${className}`}
     >
-      {/* Background Decorative Accent */}
-      <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br from-[#fef3c7] to-[#e8d4a8] opacity-30 pointer-events-none blur-xl" />
-
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
         {/* Header & Description */}
         <div className="space-y-1.5 max-w-md">
           <div className="flex items-center space-x-2">
-            <span className="p-1.5 rounded-lg bg-[#f0ebd9] text-[#9a3412] border border-[#e2d5be]">
+            <span className="p-1.5 rounded-lg bg-[#fef08a] text-black border-2 border-black shadow-[1px_1px_0_#000]">
               <Send className="w-4 h-4" />
             </span>
-            <h3 className="text-base font-heritage font-bold text-[#1c1812] tracking-tight">
+            <h3 className="text-base font-black text-black tracking-tight">
               Link Telegram for Instant Push Alerts
             </h3>
           </div>
-          <p className="text-xs text-[#5c5243] font-sans leading-relaxed">
+          <p className="text-xs text-black/80 font-sans leading-relaxed font-medium">
             Get real-time warnings before liquidation strikes your loan. When markets flash crash,
             @Bachega_bot sends immediate rescue advice directly to your phone.
           </p>
@@ -154,15 +151,15 @@ export default function TelegramConnectCard({
             <button
               type="button"
               onClick={handleConnectClick}
-              className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1e8ec3] text-white text-xs font-bold uppercase tracking-wider transition-all duration-150 active:translate-y-0.5 border border-[#1b80b0] border-b-[3px] border-[#15648a] shadow-md hover:shadow"
+              className="inline-flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-[#229ED9] hover:bg-[#1a8dc4] text-white text-xs font-black uppercase tracking-wider transition-all border-2 border-black shadow-[3px_3px_0_#000] active:translate-x-[1px] active:translate-y-[1px]"
             >
               <span>Connect @Bachega_bot</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </button>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#dcfce7] border border-[#86efac] text-[#166534] text-xs font-mono font-bold shadow-xs">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#16a34a]" />
+              <span className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-[#86efac] border-2 border-black text-[#065f46] text-xs font-mono font-black shadow-[2px_2px_0_#000]">
+                <CheckCircle2 className="w-3.5 h-3.5 text-[#065f46]" />
                 <span>Connected: @{username || 'BachegaUser'} ✓</span>
               </span>
 
@@ -170,7 +167,7 @@ export default function TelegramConnectCard({
                 type="button"
                 onClick={handleSendTestAlert}
                 disabled={testSending}
-                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#fef3c7] text-[#9a3412] border border-[#e8d4a8] border-b-2 border-[#d8c292] text-[11px] font-bold transition-all disabled:opacity-50"
+                className="px-2.5 py-1.5 rounded-lg bg-white hover:bg-[#fef08a] text-black border-2 border-black shadow-[2px_2px_0_#000] text-[11px] font-black transition-all disabled:opacity-50 active:translate-x-[1px] active:translate-y-[1px]"
               >
                 {testSending ? (
                   <span className="flex items-center space-x-1">
@@ -188,17 +185,17 @@ export default function TelegramConnectCard({
 
       {/* Active Polling Status Indicator */}
       {isPolling && !verified && (
-        <div className="mt-4 pt-3.5 border-t border-[#e8d4a8] flex items-center justify-between text-xs text-[#786e5e] animate-in fade-in duration-200">
+        <div className="mt-4 pt-3.5 border-t-2 border-black flex items-center justify-between text-xs text-black animate-in fade-in duration-200">
           <div className="flex items-center space-x-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#229ED9] opacity-75" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#229ED9]" />
             </span>
-            <span className="font-medium text-[#1c1812]">
-              Waiting for you to tap <strong className="font-bold text-[#229ED9]">START</strong> in Telegram...
+            <span className="font-bold text-black">
+              Waiting for you to tap <strong className="font-black text-[#229ED9]">START</strong> in Telegram...
             </span>
           </div>
-          <span className="font-mono text-[10px] text-[#a89e8d]">
+          <span className="font-mono font-bold text-[10px] text-black/70 bg-[#fef08a] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
             Polling ({pollCount * 3}s)
           </span>
         </div>
@@ -206,21 +203,21 @@ export default function TelegramConnectCard({
 
       {/* Verified Status Banner & Auto-checked Delivery Checkbox */}
       {verified && (
-        <div className="mt-4 pt-3.5 border-t border-[#86efac] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="mt-4 pt-3.5 border-t-2 border-black flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <label className="flex items-center space-x-2 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={isAlertChecked || true}
               onChange={(e) => onToggleAlert && onToggleAlert(e.target.checked)}
-              className="w-4 h-4 rounded text-[#16a34a] focus:ring-[#86efac] border-[#a3e635] accent-[#16a34a]"
+              className="w-4 h-4 rounded text-[#16a34a] focus:ring-[#86efac] border-2 border-black accent-[#16a34a]"
             />
-            <span className="font-bold text-[#14532d]">
+            <span className="font-black text-black">
               Auto-Dispatch Liquidation Alerts to Telegram
             </span>
           </label>
 
           {testSuccess && (
-            <span className="text-[11px] font-mono text-[#15803d] font-bold animate-in fade-in">
+            <span className="text-[11px] font-mono text-[#065f46] font-black bg-[#86efac] px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000] animate-in fade-in">
               ⚡ Test alert sent! Check your Telegram chat.
             </span>
           )}
@@ -228,7 +225,7 @@ export default function TelegramConnectCard({
       )}
 
       {errorMsg && (
-        <div className="mt-3 text-[11px] text-[#dc2626] font-mono">
+        <div className="mt-3 text-[11px] text-[#dc2626] font-mono font-bold">
           ⚠️ {errorMsg}
         </div>
       )}

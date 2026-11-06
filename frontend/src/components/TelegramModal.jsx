@@ -92,58 +92,58 @@ export default function TelegramModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md bg-[#fdf5e6] border-2 border-[#e8d4a8] shadow-[0_12px_40px_rgba(76,29,149,0.2)] rounded-2xl overflow-hidden">
-        {/* Top Canopy Ribbon */}
-        <div className="h-1.5 bg-gradient-to-r from-[#4c1d95] via-[#b45309] to-[#b91c1c] w-full" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-md bg-white border-2 border-black shadow-[6px_6px_0_#000] rounded-2xl overflow-hidden">
+        {/* Top Solid Black Ribbon */}
+        <div className="h-2 bg-black w-full" />
 
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#e8d4a8] bg-[#f5e8cc]">
+        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-black bg-[#fef08a]">
           <div className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#4c1d95] text-white flex items-center justify-center font-bold text-sm shadow-[0_2px_0_#280c54]">
-              <Bot className="w-4 h-4 text-[#fef3c7]" />
+            <div className="w-8 h-8 rounded-lg bg-[#229ED9] text-white flex items-center justify-center font-black text-sm border-2 border-black shadow-[1px_1px_0_#000]">
+              <Bot className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h3 className="text-base font-heritage font-black text-[#1c1812]">
+              <h3 className="text-base font-black text-black">
                 Telegram Alerts Bot
               </h3>
-              <p className="text-[11px] text-[#443a2b] font-heritage italic">
+              <p className="text-[11px] text-black/70 font-medium">
                 Direct on-chain liquidation warnings
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-[#786e5e] hover:text-[#1c1812] p-1.5 rounded-lg hover:bg-white/60 transition-colors"
+            className="text-black hover:bg-black/10 p-1.5 rounded-lg transition-colors border border-black/20"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-black" />
           </button>
         </div>
 
         {/* Modal Body */}
         <div className="p-6 space-y-5">
           {/* Step 1: Open Bot on Telegram */}
-          <div className="p-4 rounded-xl bg-[#f5e8cc] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] space-y-2">
+          <div className="p-4 rounded-xl bg-white border-2 border-black shadow-[3px_3px_0_#000] space-y-2">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#b45309]">
+              <span className="font-mono text-[11px] font-black uppercase tracking-wider text-black">
                 STEP 1: INITIATE BOT CHAT
               </span>
-              <span className="text-[10px] font-mono font-bold bg-white text-[#4c1d95] px-2 py-0.5 rounded border border-[#e8d4a8]">
+              <span className="text-[10px] font-mono font-black bg-[#fef08a] text-black px-2 py-0.5 rounded border border-black shadow-[1px_1px_0_#000]">
                 @{BOT_USERNAME}
               </span>
             </div>
 
-            <p className="text-xs text-[#443a2b] leading-relaxed font-sans">
-              Tap Start or send <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-[#b91c1c]">/start</code> in the bot chat to authorize automated notifications.
+            <p className="text-xs text-black/80 leading-relaxed font-sans font-medium">
+              Tap Start or send <code className="bg-[#fee2e2] px-1.5 py-0.5 rounded font-mono font-black text-[#dc2626] border border-black/30">/start</code> in the bot chat to authorize automated notifications.
             </p>
 
             <a
               href={BOT_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full btn-3d-royal py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center space-x-2"
+              className="w-full btn-3d-royal py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2"
             >
-              <span>1. Open @{BOT_USERNAME} on Telegram (t.me/{BOT_USERNAME})</span>
+              <span>1. Open @{BOT_USERNAME} on Telegram</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -151,11 +151,11 @@ export default function TelegramModal({
           {/* Step 2: Verification Status & Button */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#b45309]">
+              <span className="font-mono text-[11px] font-black uppercase tracking-wider text-black">
                 STEP 2: CONFIRM CONNECTION
               </span>
               {chatId && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-[#dcfce7] text-[#166534] border border-[#86efac]">
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-black bg-[#86efac] text-[#065f46] border-2 border-black shadow-[1px_1px_0_#000]">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
                   Connected: @{username}
                 </span>
@@ -166,7 +166,7 @@ export default function TelegramModal({
               type="button"
               onClick={handleVerify}
               disabled={verifying}
-              className="w-full btn-3d-gold py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 disabled:opacity-50"
+              className="w-full btn-3d-gold py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2 disabled:opacity-50"
             >
               {verifying ? (
                 <>
@@ -175,7 +175,7 @@ export default function TelegramModal({
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="w-4 h-4 text-[#fde68a]" />
+                  <ShieldCheck className="w-4 h-4 text-black" />
                   <span>Verify &amp; Link Account</span>
                 </>
               )}
@@ -184,25 +184,25 @@ export default function TelegramModal({
 
           {/* Error Message */}
           {error && (
-            <div className="p-3.5 rounded-xl bg-[#fee2e2] border border-[#fca5a5] text-xs text-[#991515] flex items-start space-x-2 font-medium">
-              <AlertTriangle className="w-4 h-4 shrink-0 text-[#b91c1c] mt-0.5" />
+            <div className="p-3.5 rounded-xl bg-[#fee2e2] border-2 border-black shadow-[2px_2px_0_#000] text-xs text-[#991b1b] flex items-start space-x-2 font-bold">
+              <AlertTriangle className="w-4 h-4 shrink-0 text-[#dc2626] mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
           {/* Test Alert Dispatch (Unlocked on Success) */}
           {chatId && (
-            <div className="pt-3 border-t border-[#e8d4a8] space-y-3">
+            <div className="pt-3 border-t-2 border-black space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#4c1d95] flex items-center gap-1.5">
-                  <BellRing className="w-3.5 h-3.5 text-[#4c1d95]" />
+                <span className="font-mono text-[11px] font-black uppercase tracking-wider text-black flex items-center gap-1.5">
+                  <BellRing className="w-3.5 h-3.5 text-[#2563eb]" />
                   VERIFIED CHAT ID: {chatId}
                 </span>
               </div>
 
               {alertSuccess && (
-                <div className="p-3 rounded-xl bg-[#dcfce7] border border-[#86efac] text-xs text-[#166534] flex items-center space-x-2 font-bold animate-in fade-in">
-                  <CheckCircle2 className="w-4 h-4 text-[#15803d]" />
+                <div className="p-3 rounded-xl bg-[#86efac] border-2 border-black shadow-[2px_2px_0_#000] text-xs text-[#065f46] flex items-center space-x-2 font-black animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-[#065f46]" />
                   <span>Test warning alert dispatched to your Telegram!</span>
                 </div>
               )}
@@ -211,7 +211,7 @@ export default function TelegramModal({
                 type="button"
                 onClick={handleSendTestAlert}
                 disabled={sendingAlert}
-                className="w-full btn-3d-crimson py-2.5 px-4 rounded-xl font-bold text-xs flex items-center justify-center space-x-2 disabled:opacity-50"
+                className="w-full btn-3d-crimson py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2 disabled:opacity-50"
               >
                 {sendingAlert ? (
                   <>
@@ -230,12 +230,12 @@ export default function TelegramModal({
         </div>
 
         {/* Modal Footer */}
-        <div className="px-6 py-3 bg-[#f5e8cc] border-t border-[#e8d4a8] flex items-center justify-between text-[11px] text-[#786e5e] font-mono">
+        <div className="px-6 py-3 bg-[#fef08a] border-t-2 border-black flex items-center justify-between text-[11px] text-black font-mono font-bold">
           <span>Simulation early-warning system</span>
           <button
             type="button"
             onClick={onClose}
-            className="font-bold text-[#1c1812] hover:underline"
+            className="font-black text-black hover:underline"
           >
             Done
           </button>

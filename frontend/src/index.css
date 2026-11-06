@@ -4,125 +4,195 @@
 
 @layer base {
   body {
-    background-color: #fdf5e6;
-    color: #1c1812;
+    background-color: #fffdf5;
+    color: #000000;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Custom warm scrollbars */
+/* Custom Neo-Brutalist stark scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 ::-webkit-scrollbar-track {
-  background: #f5e8cc;
+  background: #fef08a;
+  border-left: 2px solid #000000;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d8c292;
-  border-radius: 4px;
+  background: #000000;
+  border: 1px solid #000000;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b45309;
+  background: #3b82f6;
 }
 
-/* 3D Electro-Mechanical Paper & Console Utilities */
-.paper-card {
+/* ========================================================
+   NEO-BRUTALIST CARDS & PANELS
+   Thick black borders, hard unblurred drop shadows
+   ======================================================== */
+.paper-card,
+.neo-card {
   background: #ffffff;
-  border: 1px solid #e8d4a8;
-  box-shadow: 0 3px 0 #d8c292, 0 8px 20px -2px rgba(76, 29, 149, 0.05);
+  border: 2.5px solid #000000;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #000000;
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.paper-panel {
-  background: #f5e8cc;
-  border: 1px solid #e8d4a8;
-  box-shadow: 0 2px 0 #d8c292;
+.paper-card:hover,
+.neo-card:hover {
+  box-shadow: 5px 5px 0 #000000;
+  transform: translate(-1px, -1px);
+}
+
+.paper-panel,
+.neo-panel {
+  background: #fef08a;
+  border: 2.5px solid #000000;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #000000;
 }
 
 .brass-rule {
-  border-color: #e8d4a8;
+  border-color: #000000;
 }
 
-/* 3D Tactile Keycaps (Uniform border + box-shadow for pristine rounded edges) */
+/* ========================================================
+   NEO-BRUTALIST TACTILE KEYCAPS & TABS
+   ======================================================== */
 .keycap-tab {
-  background: #fdfaf3;
-  border: 1px solid #e8d4a8;
-  box-shadow: 0 3px 0 #d8c292, 0 2px 4px rgba(180, 83, 9, 0.06);
-  transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 #000000;
+  font-weight: 800;
+  transition: all 0.08s ease-in-out;
 }
 .keycap-tab:hover {
-  background: #ffffff;
-  border-color: #c7b07d;
-  box-shadow: 0 4px 0 #b59b63, 0 4px 8px rgba(180, 83, 9, 0.08);
-  transform: translateY(-1px);
+  background: #fef08a;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000000;
 }
 .keycap-tab:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #d8c292;
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000000;
 }
+
 .keycap-tab-active {
-  background: #4c1d95 !important;
+  background: #3b82f6 !important;
   color: #ffffff !important;
-  border-color: #3b1575 !important;
-  box-shadow: 0 3px 0 #280c54, 0 4px 12px rgba(76, 29, 149, 0.25) !important;
+  border: 2px solid #000000 !important;
+  border-radius: 8px !important;
+  box-shadow: 3px 3px 0 #000000 !important;
+  font-weight: 800 !important;
 }
 
-/* 3D Action Push-Buttons */
-.btn-3d-royal {
-  background: #4c1d95;
+/* ========================================================
+   NEO-BRUTALIST ACTION BUTTONS
+   ======================================================== */
+.btn-3d-royal,
+.btn-neo-blue {
+  background: #3b82f6;
   color: #ffffff;
-  border: 1px solid #3b1575;
-  box-shadow: 0 4px 0 #280c54, 0 4px 14px rgba(76, 29, 149, 0.3);
-  transition: all 0.1s ease-in-out;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #000000;
+  font-weight: 800;
+  transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.btn-3d-royal:hover {
-  background: #5b21b6;
-  box-shadow: 0 4px 0 #3b1575, 0 6px 18px rgba(76, 29, 149, 0.35);
-  transform: translateY(-1px);
+.btn-3d-royal:hover,
+.btn-neo-blue:hover {
+  background: #2563eb;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000000;
 }
-.btn-3d-royal:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #280c54;
+.btn-3d-royal:active,
+.btn-neo-blue:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000000;
 }
 
-.btn-3d-gold {
-  background: #b45309;
+.btn-3d-gold,
+.btn-neo-yellow {
+  background: #fef08a;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #000000;
+  font-weight: 800;
+  transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-3d-gold:hover,
+.btn-neo-yellow:hover {
+  background: #fde047;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000000;
+}
+.btn-3d-gold:active,
+.btn-neo-yellow:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000000;
+}
+
+.btn-3d-crimson,
+.btn-neo-coral {
+  background: #f87171;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 10px;
+  box-shadow: 4px 4px 0 #000000;
+  font-weight: 800;
+  transition: all 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-3d-crimson:hover,
+.btn-neo-coral:hover {
+  background: #ef4444;
   color: #ffffff;
-  border: 1px solid #924309;
-  box-shadow: 0 4px 0 #78350f, 0 4px 14px rgba(180, 83, 9, 0.3);
-  transition: all 0.1s ease-in-out;
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 #000000;
 }
-.btn-3d-gold:hover {
-  background: #d97706;
-  box-shadow: 0 4px 0 #924309, 0 6px 18px rgba(180, 83, 9, 0.35);
-  transform: translateY(-1px);
-}
-.btn-3d-gold:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #78350f;
+.btn-3d-crimson:active,
+.btn-neo-coral:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000000;
 }
 
-.btn-3d-crimson {
-  background: #b91c1c;
-  color: #ffffff;
-  border: 1px solid #991515;
-  box-shadow: 0 4px 0 #7f1d1d, 0 4px 14px rgba(185, 28, 28, 0.3);
-  transition: all 0.1s ease-in-out;
-}
-.btn-3d-crimson:hover {
-  background: #dc2626;
-  box-shadow: 0 4px 0 #991515, 0 6px 18px rgba(185, 28, 28, 0.35);
-  transform: translateY(-1px);
-}
-.btn-3d-crimson:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #7f1d1d;
+/* Neo-Brutalist Badges */
+.neo-badge-safe {
+  background: #86efac;
+  color: #065f46;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  font-weight: 900;
 }
 
-/* 3D Ticket Badge */
-.ticket-badge {
-  background: #fef3c7;
-  border: 1px dashed #b45309;
-  box-shadow: 0 2px 0 #924309;
-  color: #78350f;
+.neo-badge-danger {
+  background: #fca5a5;
+  color: #991b1b;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  font-weight: 900;
+}
+
+.neo-badge-warn {
+  background: #fef08a;
+  color: #854d0e;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  font-weight: 900;
+}
+
+.neo-badge-neutral {
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  box-shadow: 2px 2px 0 #000000;
+  font-weight: 900;
+}
+
+/* Custom Neo Range Sliders */
+input[type="range"] {
+  accent-color: #3b82f6;
 }

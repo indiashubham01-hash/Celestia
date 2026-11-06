@@ -20,9 +20,9 @@ export default function Navbar({
   const isDashboardView = currentView === 'dashboard';
 
   return (
-    <header className="sticky top-0 z-40 bg-[#f5e8cc]/95 backdrop-blur-md border-b-2 border-[#e8d4a8] shadow-sm">
-      {/* Carnival Canopy Accent Ribbon */}
-      <div className="h-1 bg-gradient-to-r from-[#4c1d95] via-[#b45309] to-[#b91c1c] w-full" />
+    <header className="sticky top-0 z-40 bg-white border-b-2 border-black shadow-[0_2px_0_#000000]">
+      {/* Neo-Brutalist Accent Top Ribbon */}
+      <div className="h-1 bg-black w-full" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
@@ -35,33 +35,33 @@ export default function Navbar({
               }
             }}
           >
-            <div className="w-9 h-9 rounded-xl bg-[#4c1d95] text-[#fef3c7] flex items-center justify-center font-grand font-black text-lg border border-[#3b1575] shadow-[0_3px_0_#280c54] transition-transform active:translate-y-0.5 active:shadow-[0_1px_0_#280c54]">
+            <div className="w-9 h-9 rounded-lg bg-[#3b82f6] text-white flex items-center justify-center font-black text-xl border-2 border-black shadow-[2px_2px_0_#000000] transition-transform active:translate-x-0.5 active:translate-y-0.5 active:shadow-none">
               B
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-heritage font-black text-xl tracking-tight text-[#1c1812]">
-                  Bachega
+                <span className="font-black text-xl tracking-tight text-black">
+                  Bachega.fi
                 </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono tracking-wider bg-[#b45309] text-white border border-[#924309] shadow-[0_1px_0_#78350f] rounded font-bold uppercase">
+                <span className="px-2 py-0.5 text-[10px] font-mono tracking-wider bg-[#fef08a] text-black border-2 border-black shadow-[2px_2px_0_#000000] rounded font-black uppercase">
                   READ-ONLY
                 </span>
               </div>
-              <p className="text-[11px] text-[#443a2b] font-heritage italic hidden sm:block">
+              <p className="text-[11px] text-gray-700 font-mono font-medium hidden sm:block">
                 DeFi Risk &amp; Crash Simulation Workbench
               </p>
             </div>
           </div>
 
-          {/* Center Navigation Links - 3D Mechanical Keycaps on Dashboard */}
+          {/* Center Navigation Links - Neo-Brutalist Keycaps on Dashboard */}
           {isDashboardView ? (
-            <nav className="hidden md:flex items-center space-x-2 font-sans">
+            <nav className="hidden md:flex items-center space-x-2.5 font-sans">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center space-x-2 transition-all ${
                   activeTab === 'dashboard'
                     ? 'keycap-tab-active'
-                    : 'keycap-tab text-[#443a2b]'
+                    : 'keycap-tab text-black'
                 }`}
               >
                 <span className="font-mono text-[10px] opacity-75">[1]</span>
@@ -71,10 +71,10 @@ export default function Navbar({
 
               <button
                 onClick={() => setActiveTab('simulator')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center space-x-2 transition-all ${
                   activeTab === 'simulator'
                     ? 'keycap-tab-active'
-                    : 'keycap-tab text-[#443a2b]'
+                    : 'keycap-tab text-black'
                 }`}
               >
                 <span className="font-mono text-[10px] opacity-75">[2]</span>
@@ -84,10 +84,10 @@ export default function Navbar({
 
               <button
                 onClick={() => setActiveTab('alerts')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-all ${
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center space-x-2 transition-all ${
                   activeTab === 'alerts'
                     ? 'keycap-tab-active'
-                    : 'keycap-tab text-[#443a2b]'
+                    : 'keycap-tab text-black'
                 }`}
               >
                 <span className="font-mono text-[10px] opacity-75">[3]</span>
@@ -96,9 +96,9 @@ export default function Navbar({
               </button>
             </nav>
           ) : (
-            <div className="hidden md:flex items-center space-x-2 text-xs text-[#443a2b] font-mono bg-[#fdf5e6] px-3.5 py-1 rounded-full border border-[#e8d4a8] shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
-              <span className="font-semibold">100% Non-Custodial Simulation</span>
+            <div className="hidden md:flex items-center space-x-2 text-xs text-black font-mono bg-[#fef08a] px-3.5 py-1 rounded-lg border-2 border-black shadow-[2px_2px_0_#000000]">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#16a34a] border border-black animate-pulse"></span>
+              <span className="font-black">100% Non-Custodial Simulation</span>
             </div>
           )}
 
@@ -108,12 +108,12 @@ export default function Navbar({
               <>
                 {/* Active Monitored Wallet Pill with Network Badge */}
                 {primaryWallet && (
-                  <div className="hidden sm:flex items-center space-x-2 bg-[#ffffff] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] rounded-xl px-3 py-1.5 text-xs">
-                    <span className="w-2 h-2 rounded-full bg-[#15803d] animate-pulse"></span>
-                    <span className="px-1.5 py-0.5 rounded bg-[#f5e8cc] border border-[#e8d4a8] text-[#4c1d95] text-[10px] font-bold uppercase font-mono">
+                  <div className="hidden sm:flex items-center space-x-2 bg-white border-2 border-black shadow-[2px_2px_0_#000000] rounded-lg px-3 py-1.5 text-xs">
+                    <span className="w-2 h-2 rounded-full bg-[#16a34a]"></span>
+                    <span className="px-1.5 py-0.2 rounded bg-[#fef08a] border border-black text-black text-[10px] font-black uppercase font-mono">
                       {primaryWallet.chain}
                     </span>
-                    <span className="font-mono font-bold text-[#1c1812]">
+                    <span className="font-mono font-bold text-black">
                       {shortenAddress(primaryWallet.address)}
                     </span>
                   </div>
@@ -123,7 +123,7 @@ export default function Navbar({
                 <button
                   onClick={onOpenWalletModal}
                   title="Track another public address"
-                  className="btn-3d-gold px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1"
+                  className="btn-3d-gold px-3.5 py-1.5 rounded-lg text-xs font-black transition-all flex items-center space-x-1"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Add Wallet</span>
@@ -133,10 +133,10 @@ export default function Navbar({
                 {user && (
                   <div
                     title={user.email}
-                    className="hidden lg:flex items-center space-x-1.5 bg-[#ffffff] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] rounded-xl px-3 py-1.5 text-xs text-[#443a2b]"
+                    className="hidden lg:flex items-center space-x-1.5 bg-white border-2 border-black shadow-[2px_2px_0_#000000] rounded-lg px-3 py-1.5 text-xs text-black"
                   >
-                    <User className="w-3.5 h-3.5 text-[#b45309]" />
-                    <span className="font-mono font-medium max-w-[120px] truncate">{user.email}</span>
+                    <User className="w-3.5 h-3.5 text-[#3b82f6]" />
+                    <span className="font-mono font-bold max-w-[120px] truncate">{user.email}</span>
                   </div>
                 )}
 
@@ -144,7 +144,7 @@ export default function Navbar({
                 <button
                   onClick={onLogOut}
                   title="Sign out of current session"
-                  className="bg-[#ffffff] hover:bg-[#fee2e2] text-[#443a2b] hover:text-[#b91c1c] border border-[#e8d4a8] shadow-[0_2px_0_#d8c292] active:translate-y-0.5 active:shadow-[0_1px_0_#d8c292] px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-all"
+                  className="bg-white hover:bg-[#fca5a5] text-black border-2 border-black shadow-[2px_2px_0_#000000] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none px-3.5 py-1.5 rounded-lg text-xs font-black flex items-center space-x-1.5 transition-all"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Sign Out</span>
@@ -155,17 +155,17 @@ export default function Navbar({
                 {/* Landing / Onboard Action Buttons */}
                 <button
                   onClick={onTryDemo}
-                  className="btn-3d-royal px-4 py-2 rounded-xl text-xs font-bold tracking-wide flex items-center space-x-1.5"
+                  className="btn-3d-royal px-4 py-2 rounded-lg text-xs font-black tracking-wide flex items-center space-x-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#fde68a]" />
+                  <Sparkles className="w-3.5 h-3.5 text-[#fef08a]" />
                   <span>Try Live Demo</span>
                 </button>
 
                 <button
                   onClick={onOpenLoginModal}
-                  className="btn-3d-gold px-4 py-2 rounded-xl text-xs font-bold tracking-wide flex items-center space-x-1.5"
+                  className="btn-3d-gold px-4 py-2 rounded-lg text-xs font-black tracking-wide flex items-center space-x-1.5"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-white" />
+                  <LogIn className="w-3.5 h-3.5 text-black" />
                   <span>Sign In</span>
                 </button>
               </>
