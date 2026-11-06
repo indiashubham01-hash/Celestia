@@ -611,29 +611,62 @@ export const api = {
 
   // 6. Telegram Bot Integration
   verifyTelegram: () =>
-    request('/api/alerts/telegram/verify', {
-      method: 'POST',
-    }).catch(() => ({
-      success: true,
-      chat_id: 'demo_chat_verified',
-      username: 'borrower',
-    })),
+    request('/api/alerts/telegram/verify'),
 
   getTelegramStatus: (userId) =>
-    request(`/api/alerts/telegram/status${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`).catch(() => ({
-      verified: localStorage.getItem('bachega_telegram_verified') === 'true',
-      telegram_username: localStorage.getItem('bachega_telegram_username') || '',
-    })),
+    request(`/api/alerts/telegram/status${userId ? `?user_id=${encodeURIComponent(userId)}` : ''}`),
 
   registerTelegramChat: (data) =>
     request('/api/alerts/telegram/register', {
       method: 'POST',
       body: JSON.stringify(data),
-    }).catch(() => ({ success: true })),
+    }),
 
-  sendTelegramAlert: (data) =>
-    request('/api/alerts/telegram/send-alert', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }).catch(() => ({ success: true })),
+  sendTelegramAlert: async (data) => {
+    // 1. First attempt dispatch via backend server
+    try {
+      return await request('/api/alerts/telegram/send-alert', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    } catch (backendErr) {
+      console.warn('Backend alert endpoint unreachable, attempting direct Telegram API dispatch:', backendErr.message);
+
+      const targetChatId = data.chat_id || localStorage.getItem('bachega_telegram_chat_id');
+      if (!targetChatId || targetChatId === 'demo_chat_verified' || targetChatId === 'test_demo_chat') {
+        throw new Error('Please enter your numeric Telegram Chat ID (from @userinfobot) or start the bot so we know where to send alerts.');
+      }
+
+      // 2. Direct Telegram Bot API dispatch (enables live push on Vercel static deployments)
+      const botToken = import.meta.env.VITE_TELEGRAM_BOT_TOKEN || '9132765758:AAHUAAGWNmX6Zopp9bUl5s914LjaOBtLrWM';
+      const hf = data.health_factor != null ? Number(data.health_factor) : 1.048;
+      const shock = data.shock_pct != null ? Math.abs(Number(data.shock_pct)) : 25.0;
+
+      const alertText =
+        `🚨 *BACHEGA.FI LIQUIDATION RISK WARNING*\n\n` +
+        `• *Protocol:* Aave V3 (Arbitrum)\n` +
+        `• *Market Plunge:* -${shock.toFixed(0)}%\n` +
+        `• *Simulated Health Factor:* *${hf.toFixed(3)}* ⚠️\n` +
+        `• *Status:* CRITICAL LIQUIDATION BOUNDARY\n\n` +
+        `*Action Required:* Repay debt or deposit collateral buffer on Bachega.fi immediately to restore HF > 1.10.\n\n` +
+        `ℹ️ _Simulation, not prediction._`;
+
+      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          text: alertText,
+          parse_mode: 'Markdown',
+        }),
+      });
+
+      const resJson = await response.json();
+      if (!resJson.ok) {
+        throw new Error(resJson.description || 'Telegram rejected alert message. Ensure you started the bot.');
+      }
+
+      return { success: true, chat_id: targetChatId };
+    }
+  },
 };

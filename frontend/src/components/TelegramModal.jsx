@@ -25,9 +25,29 @@ export default function TelegramModal({
   const userId = currentUser?.id || currentUser?.user_id || 'usr_pitch_demo';
   const botLink = `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(userId)}`;
 
-  const [chatId, setChatId] = useState(
+  const [inputChatId, setInputChatId] = useState(
     () => initialChatId || localStorage.getItem('bachega_telegram_chat_id') || ''
   );
+
+  const handleManualSaveChatId = () => {
+    const clean = inputChatId.trim();
+    if (!clean) {
+      setError('Please enter a valid numeric Telegram Chat ID.');
+      return;
+    }
+    setChatId(clean);
+    setVerified(true);
+    setError(null);
+    localStorage.setItem('bachega_telegram_chat_id', clean);
+    localStorage.setItem('bachega_telegram_verified', 'true');
+    if (onTelegramVerified) {
+      onTelegramVerified({
+        verified: true,
+        chat_id: clean,
+        username: username || 'Borrower',
+      });
+    }
+  };
   const [username, setUsername] = useState(
     () => initialUsername || localStorage.getItem('bachega_telegram_username') || ''
   );
@@ -154,7 +174,11 @@ export default function TelegramModal({
     setAlertSuccess(false);
 
     try {
-      const targetChatId = chatId || localStorage.getItem('bachega_telegram_chat_id') || 'test_demo_chat';
+      const targetChatId = chatId || inputChatId || localStorage.getItem('bachega_telegram_chat_id');
+      if (!targetChatId || targetChatId === 'demo_chat_verified' || targetChatId === 'test_demo_chat') {
+        throw new Error('Please enter your numeric Telegram Chat ID above (from @userinfobot) so the alert can be delivered to your phone.');
+      }
+
       const res = await api.sendTelegramAlert({
         chat_id: String(targetChatId),
         health_factor: 1.048,
@@ -163,12 +187,12 @@ export default function TelegramModal({
 
       if (res && res.success !== false) {
         setAlertSuccess(true);
-        setTimeout(() => setAlertSuccess(false), 5000);
+        setTimeout(() => setAlertSuccess(false), 8000);
       } else {
         setError(res.message || 'Failed to dispatch test alert.');
       }
     } catch (err) {
-      setError(err.message || 'Error communicating with alert server.');
+      setError(err.message || 'Error communicating with Telegram alert system.');
     } finally {
       setSendingAlert(false);
     }
@@ -239,16 +263,42 @@ export default function TelegramModal({
               {verified && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-black bg-[#86efac] text-[#065f46] border-2 border-black shadow-[1px_1px_0_#000]">
                   <CheckCircle2 className="w-3 h-3 mr-1" />
-                  Linked: @{username || 'Borrower'}
+                  {chatId ? `ID: ${chatId}` : `@${username || 'Borrower'}`}
                 </span>
               )}
+            </div>
+
+            {/* Direct Chat ID Input for Real Instant Push Delivery */}
+            <div className="p-3 rounded-xl bg-white border-2 border-black shadow-[2px_2px_0_#000] space-y-2">
+              <label className="block text-[11px] font-mono font-black text-black">
+                Your Telegram Numeric Chat ID:
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. 582910394"
+                  value={inputChatId}
+                  onChange={(e) => setInputChatId(e.target.value)}
+                  className="flex-1 px-3 py-1.5 rounded-lg bg-[#fffdf5] border-2 border-black text-xs font-mono font-black text-black focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleManualSaveChatId}
+                  className="px-3 py-1.5 rounded-lg bg-[#fef08a] border-2 border-black text-xs font-black shadow-[1px_1px_0_#000] hover:bg-[#fde047] active:translate-x-[1px] active:translate-y-[1px]"
+                >
+                  Save ID
+                </button>
+              </div>
+              <p className="text-[10px] text-black/70 font-mono">
+                💡 Don't know your ID? Open <a href="https://t.me/userinfobot" target="_blank" rel="noreferrer" className="underline font-bold text-[#2563eb]">@userinfobot</a> on Telegram to see your numeric ID instantly.
+              </p>
             </div>
 
             <button
               type="button"
               onClick={handleVerify}
               disabled={verifying}
-              className="w-full btn-3d-gold py-2.5 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2 disabled:opacity-50"
+              className="w-full btn-3d-gold py-2 px-4 rounded-xl font-black text-xs flex items-center justify-center space-x-2 disabled:opacity-50"
             >
               {verifying ? (
                 <>
@@ -258,7 +308,7 @@ export default function TelegramModal({
               ) : (
                 <>
                   <ShieldCheck className="w-4 h-4 text-black" />
-                  <span>Verify &amp; Link Account</span>
+                  <span>Auto-Detect from @{BOT_USERNAME}</span>
                 </>
               )}
             </button>
